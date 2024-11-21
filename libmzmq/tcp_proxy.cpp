@@ -42,7 +42,6 @@ void thread_proxy(void *zrecv, void *zsend, void *socket_api, int id) {
         printf("[%d] send request[%d]...\n", id, size);
         zmq_send(zsend, buffer, size, 0);
         send_to_matlab(buffer, size, socket_api);
-        printf("[%d] end iter\n", id);
     }
 }
 
@@ -60,8 +59,6 @@ void thread_proxy_2(void *zrecv, void *zsend, void *socket_api, int id) {
         printf("[%d] send response[%d]...\n", id, size);
         zmq_send(zrecv, buffer, size, 0);
         send_to_matlab(buffer, size, socket_api);
-        printf("[%d] end iter\n", id);
-
     }
 }
 
@@ -103,7 +100,7 @@ int main(int argc, char *argv[]){
         perror("zmq_socket");
         return 1;
     }
-    printf("[Init]\n");
+    
     if(zmq_bind(socket_proxy1, addr_send_1.c_str()) != 0) {
         perror("zmq_bind");
         return 1;
@@ -112,6 +109,7 @@ int main(int argc, char *argv[]){
         perror("zmq_bind");
         return 1;
     }
+    printf("[Init]\n");
     std::thread thr1;
     std::thread thr2;
     std::thread thr3;
