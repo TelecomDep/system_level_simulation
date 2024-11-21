@@ -1,20 +1,21 @@
 ## Proxy server между srsenb и srsue
 
-### Рекомендуемая версия ОС:  22.04.1-Ubuntu
+### Проверено на 22.04.1 и 24.04 Ubuntu
 
 ### Установка компонентов:
 
-    MATLAB R2024a
+    рекомендуемая версия MATLAB R2024a
 
     sudo apt install openjdk-17-jdk
     sudo apt install maven
     sudo apt install gcc-11 g++-11
     sudo apt install make
     sudo apt install cmake
+    sudo apt install libtool
 
         Установка libzeromq и czmq
     libzeromq:
-    apt-get install libzmq3-dev
+    sudo apt-get install libzmq3-dev
     czmq:
     git clone https://github.com/zeromq/czmq.git
     cd czmq
@@ -31,6 +32,7 @@
     echo $JAVA_HOME
     mvn clean package
     результат: target/jeromq-0.6.0.jar
+    cd ..
 
         Установка srsran_4g
     Необходимые копоненты для srsran: https://docs.srsran.com/en/latest
@@ -43,12 +45,15 @@
     sudo make install
     sudo srsran_install_configs.sh user
     sudo srsran_install_configs.sh service
+    cd ..
 
 ### Установка proxy server
 
     git clone https://github.com/Kandrw/Mobile_system_NG
-    
     Скопировать полный путь до jeromq-0.6.0.jar
+    cd Mobile_system_NG/matlab
+    nano subscribe.m (или в самом matlab)
+    
     Заменить путь в javaaddpath в скрипте Mobile_system_NG/matlab/subscribe.m 
     
     cd Mobile_system_NG
@@ -56,6 +61,7 @@
     cd build
     cmake ..
     make
+    cd ../..
 
 
 ### Запуск
@@ -64,10 +70,10 @@
 
     запустить скрипт Mobile_system_NG/matlab/subscribe.m 
         cd Mobile_system_NG/matlab
-        matlab subscribe.m
+        Открыть matlab, запустить скрипт subscribe.m
     
     запустить proxy server
-        cd Mobile_system_NG
+        cd Mobile_system_NG/build
         ./tcp_proxy 2000 2005 2006 2001 2111
     
     Запуск srsran
@@ -82,6 +88,9 @@
     Итог
         вывод графиков в matlab
 
+    При остановке одного из компонентов необходимо перезапустить все остальные
+    При перезаупуске удостовериться что все порты свободны
+        netstat -tulnp 
 
 
 
