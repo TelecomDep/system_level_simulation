@@ -1,4 +1,4 @@
-mkdir -p build
+
 cd build
 cmake ..
 make
@@ -12,7 +12,6 @@ while getopts "eups" OPTION; do
     e)
         
         # sudo $PATHSRS/srsenb/src/srsenb --rf.device_name=zmq --rf.device_args="fail_on_disconnect=true,tx_port=tcp://*:2000,rx_port=tcp://localhost:2001,id=enb,base_srate=23.04e6" --log.all_level=info --log.phy_lib_level=debag --log.filename=log_111.txt
-        # sudo $PATHSRS/srsenb/src/srsenb --rf.device_name=zmq --rf.device_args="fail_on_disconnect=true,tx_port=tcp://*:2000,rx_port=tcp://localhost:2001,id=enb,base_srate=23.04e6" --log.all_level=info --log.phy_lib_level=debag --log.filename=stdout /home/andrey/Mobile_system_NG/configs/enb_zmq.conf | tee log_112.txt
         sudo $PATHSRS/srsenb/src/srsenb --rf.device_name=zmq --rf.device_args="fail_on_disconnect=true,tx_port=tcp://*:2000,rx_port=tcp://localhost:2001,id=enb,base_srate=23.04e6" --log.all_level=info --log.phy_lib_level=debag --log.filename=stdout | tee log_112.txt
         
         

@@ -16,7 +16,7 @@ set(CMAKE_C_STANDARD 99)
 
 
 add_executable(tcp_proxy ./libmzmq/tcp_proxy.cpp)
-target_link_libraries(tcp_proxy zmq)
+target_link_libraries(tcp_proxy zmq pthread)
 
 
 
