@@ -1,6 +1,7 @@
 mkdir -p build
 cd build
 cmake ..
+rm tcp_proxy
 make
 
 
