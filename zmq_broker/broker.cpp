@@ -116,7 +116,7 @@ int main(int argc, char *argv[]){
         zmq_send(send_socket_for_ue_1_rx, buffer, size, 0);
         zmq_send(send_socket_for_ue_2_rx, buffer, size, 0);
 
-        printf("3\n");
+        // TODO: Concatenate samples
         memset(buffer, 0, sizeof(buffer));
         size = zmq_recv(req_socket_from_ue_1_tx, buffer, sizeof(buffer), 0);
         if(size != -1){
