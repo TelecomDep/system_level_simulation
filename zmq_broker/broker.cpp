@@ -13,15 +13,24 @@
 #define BUFFER_MAX 1024 * 1024
 
 
+typedef _Complex float cf_t;
+#define NSAMPLES2NBYTES(X) (((uint32_t)(X)) * sizeof(cf_t))
+#define NBYTES2NSAMPLES(X) ((X) / sizeof(cf_t))
+#define ZMQ_MAX_BUFFER_SIZE (NSAMPLES2NBYTES(3072000)) // 10 subframes at 20 MHz
+#define NBYTES_PER_ONE_SAMPLE (NSAMPLES2NBYTES(1)) // 1 sample
+
 int main(int argc, char *argv[]){
+    std::cout << "ZMQ_MAX_BUFFER_SIZE = " << ZMQ_MAX_BUFFER_SIZE << std::endl;
+    std::cout << "NBYTES_PER_ONE_SAMPLE = " << NBYTES_PER_ONE_SAMPLE << std::endl;
+    std::cout << "sizeof(cf_t) = " << sizeof(cf_t) << std::endl;
 
     int ret = 0;
 
     int port_gnb_tx = 2000;
     int port_gnb_rx = 2001;
 
-    int port_ue_1_tx = 2101;
-    int port_ue_1_rx = 2100;
+    int port_ue_1_tx = 2311;
+    int port_ue_1_rx = 2310;
     int port_ue_2_tx = 2201;
     int port_ue_2_rx = 2200;
 
@@ -88,11 +97,11 @@ int main(int argc, char *argv[]){
         if(size != -1){
             printf("broker received %d size packet id [%d]\n", size);
         }
-        memset(buffer, 0, sizeof(buffer));
-        size = zmq_recv(send_socket_for_ue_2_rx, buffer, sizeof(buffer), 0);
-        if(size != -1){
-            printf("broker received %d size packet id [%d]\n", size);
-        }
+        // memset(buffer, 0, sizeof(buffer));
+        // size = zmq_recv(send_socket_for_ue_2_rx, buffer, sizeof(buffer), 0);
+        // if(size != -1){
+        //     printf("broker received %d size packet id [%d]\n", size);
+        // }
 
         zmq_send(req_socket_from_gnb_tx, buffer, size, 0);
 
@@ -103,18 +112,28 @@ int main(int argc, char *argv[]){
             printf("broker received %d size packet id [%d]\n", size);
         }
         zmq_send(req_socket_from_ue_1_tx, buffer, size, 0);
-        zmq_send(req_socket_from_ue_2_tx, buffer, size, 0);
+        // zmq_send(req_socket_from_ue_2_tx, buffer, size, 0);
 
 
 
         // Data transmission
+        float sample = 0.0f;
         memset(buffer, 0, sizeof(buffer));
         size = zmq_recv(req_socket_from_gnb_tx, buffer, sizeof(buffer), 0);
         if(size != -1){
             printf("broker received %d size packet id [%d]\n", size);
+            for (int i = 0; i < size; i++)
+            {
+                sample = (float)(buffer[i]);
+                if(sample < 0.0){
+                    std::cout << "sample i = " << (float)(buffer[i]) << std::endl;
+                    sleep(1);
+                }
+            }
         }
+        
         zmq_send(send_socket_for_ue_1_rx, buffer, size, 0);
-        zmq_send(send_socket_for_ue_2_rx, buffer, size, 0);
+        // zmq_send(send_socket_for_ue_2_rx, buffer, size, 0);
 
         // TODO: Concatenate samples
         memset(buffer, 0, sizeof(buffer));
@@ -124,12 +143,12 @@ int main(int argc, char *argv[]){
         }
         zmq_send(send_socket_for_gnb_rx, buffer, size, 0);
 
-        memset(buffer, 0, sizeof(buffer));
-        size_ue_2 = zmq_recv(req_socket_from_ue_2_tx, buffer, sizeof(buffer), 0);
-        if(size != -1){
-            printf("broker received %d size packet id [%d]\n", size_ue_2);
-        }
-        zmq_send(send_socket_for_gnb_rx, buffer, size_ue_2, 0);
+        // memset(buffer, 0, sizeof(buffer));
+        // size_ue_2 = zmq_recv(req_socket_from_ue_2_tx, buffer, sizeof(buffer), 0);
+        // if(size != -1){
+        //     printf("broker received %d size packet id [%d]\n", size_ue_2);
+        // }
+        // zmq_send(send_socket_for_gnb_rx, buffer, size_ue_2, 0);
     }
 
 
