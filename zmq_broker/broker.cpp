@@ -10,6 +10,13 @@
 #include <random>
 #include <complex>
 
+void my_handler(int s){
+    printf("Caught signal %d\n",s);
+    
+    exit(1); 
+
+}
+
 #define BUFFER_MAX 1024 * 1024
 
 
@@ -20,6 +27,15 @@ typedef _Complex float cf_t;
 #define NBYTES_PER_ONE_SAMPLE (NSAMPLES2NBYTES(1)) // 1 sample
 
 int main(int argc, char *argv[]){
+
+    struct sigaction sigIntHandler;
+
+    sigIntHandler.sa_handler = my_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+ 
+    sigaction(SIGINT, &sigIntHandler, NULL);
+
     std::cout << "ZMQ_MAX_BUFFER_SIZE = " << ZMQ_MAX_BUFFER_SIZE << std::endl;
     std::cout << "NBYTES_PER_ONE_SAMPLE = " << NBYTES_PER_ONE_SAMPLE << std::endl;
     std::cout << "sizeof(cf_t) = " << sizeof(cf_t) << std::endl;
