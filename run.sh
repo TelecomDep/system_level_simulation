@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 pids=()
-CFG_PATH="$PWD/cfg1"
+CFG_PATH="$PWD/configs"
 # USER_HOME="$HOME" # or... 
 # USER_HOME="/home/<YOUR USER>" 
 LAUNCH_USER=$(whoami)
@@ -13,5 +13,8 @@ start_program() {
     pids+=($!)
     sleep 0.2
 }
+
+
+
 
  sudo xterm -hold -e python3 "$PWD/tests/zmq_rep_req_srsran/broker.py"
