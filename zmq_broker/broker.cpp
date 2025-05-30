@@ -83,65 +83,59 @@ int main(int argc, char *argv[]){
     }
 
     using cf_t = std::complex<float>;
-    std::vector<cf_t> buffer_vec(BUFFER_MAX * sizeof(cf_t));
-    // buffer_vec(BUFFER_MAX * sizeof(cf_t));
+    int N = BUFFER_MAX;
+    std::vector<cf_t> buffer_vec(N);
+    std::vector<cf_t> buffer_vec_ue_2(N);
+    std::vector<cf_t> buffer_vec_to_gnb(N);
 
-    char buffer_acc[BUFFER_MAX];
-    char buffer[BUFFER_MAX];
-    char buffer_ul[BUFFER_MAX];
-    char buffer_to_gnb[BUFFER_MAX];
-    char buffer_to_ue_2[BUFFER_MAX];
+    char buffer_acc[10];
 
-    char buffer_complex[BUFFER_MAX];
-
-    
-    // buffer = (char*)malloc(sizeof(char) * ZMQ_MAX_BUFFER_SIZE);
-    // buffer_ul = (char*)malloc(sizeof(char) * ZMQ_MAX_BUFFER_SIZE);
-    // buffer_to_gnb = (char*)malloc(sizeof(char) * ZMQ_MAX_BUFFER_SIZE);
-    // buffer_to_ue_2 = (char*)malloc(sizeof(char) * ZMQ_MAX_BUFFER_SIZE);
-    // buffer_complex = (char*)malloc(sizeof(char) * ZMQ_MAX_BUFFER_SIZE);
-    int size;
-    int size_ue_2;
-    int size_recv;
-    int size_from_ue_tx;
+    int size = 0;
+    int size_ue_2 = 0;
+    int size_recv = 0;
+    int size_from_ue_tx = 0;
 
     int num_ues = 2;
     int num_gnbs = 1;
     int broker_rcv_accept_ues[num_ues];
     int broker_rcv_accept_gnbs[num_gnbs];
     int tx_data_count = 0;
-    int tx_count_lim = 0;
+    int tx_count_lim = 100;
+    float pl_ue_2 = 30.0f;
 
-    int nbytes      = buffer_vec.size() * sizeof(cf_t);
+    int nbytes = buffer_vec.size() * sizeof(cf_t);
 
     while(1){
         // receive conn accept from RX's
         memset(buffer_acc, 0, sizeof(buffer_acc));
-        size = zmq_recv(send_socket_for_ue_1_rx, buffer_acc, sizeof(buffer_acc), 0);
+        size = zmq_recv(send_socket_for_ue_1_rx, buffer_acc, sizeof(1), 0);
         if(size == -1){
-            printf("broker received %d size packet id [%d]\n", size);
+            printf("!!!!!!!!!!!   -----1\n");
             continue;
         } else{
             broker_rcv_accept_ues[0] = 1;
+            printf("broker received from UE[1] RX = %d\n", size);
         }
-        // memset(buffer, 0, sizeof(buffer));
-        // if (tx_data_count > tx_count_lim){
-        //     size = zmq_recv(send_socket_for_ue_2_rx, buffer, sizeof(buffer), 0);
-        //     if(size == -1){
-        //         printf("broker received %d size packet id [%d]\n", size);
-        //         continue;
-        //     } else{
-        //         broker_rcv_accept_ues[1] = 1;
-        //     }
-        // }
+        memset(buffer_acc, 0, sizeof(buffer_acc));
+        if (tx_data_count > tx_count_lim){
+            size = zmq_recv(send_socket_for_ue_2_rx, buffer_acc, sizeof(1), 0);
+            if(size == -1){
+                printf("!!!!!!!!!!!   -----1 send_socket_for_ue_2_rx\n");
+                continue;
+            } else{
+                broker_rcv_accept_ues[1] = 1;
+                printf("broker received ACCEPT UE[2] RX = %d\n", size);
+            }
+        }
 
         memset(buffer_acc, 0, sizeof(buffer_acc));
-        size = zmq_recv(send_socket_for_gnb_rx, buffer_acc, sizeof(buffer_acc), 0);
+        size = zmq_recv(send_socket_for_gnb_rx, buffer_acc, sizeof(1), 0);
         if(size == -1){
-            printf("broker received %d size packet id [%d]\n", size);
+            printf("!!!!!!!!!!!   -----1 send_socket_for_gnb_rx\n");
             continue;
         } else{
             broker_rcv_accept_gnbs[0] = 1;
+            printf("broker received ACCEPT form GNB RX = %d\n", size);
         }
 
         int summ = 0;
@@ -154,77 +148,96 @@ int main(int argc, char *argv[]){
             zmq_send(req_socket_from_gnb_tx, buffer_acc, size, 0);
             zmq_send(req_socket_from_ue_1_tx, buffer_acc, size, 0);
 
-            // if (tx_data_count >= tx_count_lim){
-            //     zmq_send(req_socket_from_ue_2_tx, buffer, size, 0);
-            // }
+            if (tx_data_count >= tx_count_lim){
+                zmq_send(req_socket_from_ue_2_tx, buffer_acc, size, 0);
+            }
 
             // start data transmissiona
-            memset(buffer_complex, 0, sizeof(buffer_complex));
+            //std::fill(buffer_vec.begin(), buffer_vec.end(), 0);
             size = zmq_recv(req_socket_from_gnb_tx,  (void*)buffer_vec.data(), nbytes, 0);
-            
             if (size != -1)
             {
-                printf("broker received from gNb =  %d size packet\n", size);
+                printf("broker received from gNb =  %d size packet buffer size = %d\n", size,buffer_vec.size());
                 // for (int i = 0; i < buffer_vec.size(); i++){
-                //     if(buffer_vec[i].real() > 1){
+                //     if(buffer_vec[i].real() > 1 || buffer_vec[i].real() < -1){
                 //         std::cout << "real = " << buffer_vec[i].real()  << "imag = " << buffer_vec[i].imag() << std::endl;
                 //     }
                 //     // sleep(10);
+                // }
+                // if(size == 46080){
+                //     for (int i = 0; i < size / 8; i++){
+                //         std::cout << "real = " << buffer_vec[i].real() << "imag = " << buffer_vec[i].imag() << std::endl;
+                //     }   
                 // }
                 
             }
             zmq_send(send_socket_for_ue_1_rx, (void*)buffer_vec.data(), size, 0);
 
 
+            std::fill(buffer_vec_ue_2.begin(), buffer_vec_ue_2.end(), 0);
+            if (tx_data_count >=tx_count_lim){
+                for (int i = 0; i < buffer_vec.size(); i++){
+                    // std::complex<float> val;
+                    // val = std::complex<float>(buffer_vec[i].real()/pl_ue_2, buffer_vec[i].imag()/pl_ue_2);
+                    buffer_vec_ue_2[i] = buffer_vec[i] / pl_ue_2;
+                }
+                zmq_send(send_socket_for_ue_2_rx, (void*)buffer_vec_ue_2.data(), size, 0);
+            }
 
-            // memset(buffer_to_ue_2, 0, sizeof(buffer_to_ue_2));
-            // if (tx_data_count >=tx_count_lim){
-            //     for (int i = 0; i < size; i++){
-            //         buffer_to_ue_2[i] = (int8_t)(buffer[i] / 10.0f);
-            //     }
-            //     zmq_send(send_socket_for_ue_2_rx, buffer_to_ue_2, size, 0);
-            // }
-            
             // TODO: Concatenate samples
-            memset(buffer, 0, sizeof(buffer));
             std::fill(buffer_vec.begin(), buffer_vec.end(), 0);
             size = zmq_recv(req_socket_from_ue_1_tx, (void*)buffer_vec.data(), nbytes, 0);
             if (size != -1)
             {
                 printf("broker received from UE[1] %d size packet\n", size);
             }
+
+            std::fill(buffer_vec_to_gnb.begin(), buffer_vec_to_gnb.end(), 0);
+            if (tx_data_count >= tx_count_lim){
+                std::fill(buffer_vec_ue_2.begin(), buffer_vec_ue_2.end(), 0);
+                size_ue_2 = zmq_recv(req_socket_from_ue_2_tx, (void*)buffer_vec_ue_2.data(), nbytes, 0);
+                if (size_ue_2 != -1)
+                {
+                    printf("broker received from UE[2] %d size packet\n", size_ue_2);
+                    for (int i = 0; i < size_ue_2/8; i++){
+                        std::complex<float> val_1;
+                        val_1 = std::complex<float>(buffer_vec_ue_2[i].real()/pl_ue_2, buffer_vec_ue_2[i].imag()/pl_ue_2);
+                        buffer_vec_ue_2[i] = val_1;
+                        //buffer_vec_to_gnb[i] = buffer_vec_ue_2[i] * pl_ue_2;
+                    }
+                } else {
+                    printf("!!!!!!!!!!!   -----1 req_socket_from_ue_2_tx\n");
+                }
+            }
+
+            int max_size = size;
+            std::fill(buffer_vec_to_gnb.begin(), buffer_vec_to_gnb.end(), 0);
+            if (size_ue_2 >= size)
+            {
+                max_size = size_ue_2;
+                printf("!!! SIZES ARE NOT EQUAL ...size = %d, size_ue_2 = %d\n", size, size_ue_2);
+                for (int i = 0; i < max_size/8; i++){
+                    std::complex<float> val_2;
+                    val_2 = std::complex<float>(buffer_vec_ue_2[i].real() + buffer_vec[i].real(),  buffer_vec_ue_2[i].imag() + buffer_vec[i].imag());
+                    buffer_vec_to_gnb[i] = val_2;
+                    //buffer_vec_to_gnb[i] += buffer_vec[i];
+                }
+                
+            } else {
+                for (int i = 0; i < max_size/8; i++){
+                    std::complex<float> val_2;
+                    val_2 = std::complex<float>(buffer_vec_ue_2[i].real() + buffer_vec[i].real(),  buffer_vec_ue_2[i].imag() + buffer_vec[i].imag());
+                    buffer_vec_to_gnb[i] = val_2;
+                    //buffer_vec_to_gnb[i] += buffer_vec[i];
+                }
+            }
+
+            printf("size = %d, size_ue_2 = %d\n", size, size_ue_2);
             
-            // memset(buffer_ul, 0, sizeof(buffer_ul));
-            // if (tx_data_count >= tx_count_lim){
-            //     size_ue_2 = zmq_recv(req_socket_from_ue_2_tx, buffer_ul, sizeof(buffer_ul), 0);
-            //     if (size != -1)
-            //     {
-            //         printf("broker received from UE[2] %d size packet\n", size_ue_2);
-            //     }
-            //     for (int i = 0; i < size_ue_2; i++)
-            //     {
-            //         buffer_ul[i] = (int8_t)(buffer_ul[i]  / 10.0f);
-            //     }
-
-            // }
-
-            // memset(buffer_to_gnb, 0, sizeof(buffer_to_gnb));
-
-            // int max_size = size;
-            // if (size_ue_2 >= size)
-            // {
-            //     max_size = size_ue_2;
-            // }
-
-            // printf("size = %d, size_ue_2 = %d\n", size, size_ue_2);
+            // concatenate two buffers and send it to gNb
             
-            // // concatenate two buffers and send it to gNb
-            // for (int i = 0; i < max_size; i++)
-            // {
-            //     buffer_to_gnb[i] = (buffer[i]) + (buffer_ul[i]);
-            // }
 
-            zmq_send(send_socket_for_gnb_rx, (void*)buffer_vec.data(), size, 0);
+            zmq_send(send_socket_for_gnb_rx, (void*)buffer_vec_to_gnb.data(), max_size, 0);
 
             tx_data_count++;
         }
@@ -234,11 +247,6 @@ int main(int argc, char *argv[]){
         }
     }
 
-    free(buffer_complex);
-    free(buffer);
-    free(buffer_ul);
-    free(buffer_to_gnb);
-    free(buffer_to_ue_2);
     zmq_close(send_socket_for_gnb_rx);
     zmq_close (req_socket_from_ue_1_tx);
 
