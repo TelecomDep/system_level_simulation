@@ -1,0 +1,74 @@
+---
+- name: Build and install Osmocom modules
+  hosts: localhost
+  become: true
+  vars:
+    install_path: "{{ install_path }}"
+    install_user: "{{ install_user }}"
+    debug_mode: false  # true для включения режима отладки
+  tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Install required packages
+      apt:
+        name: 
+          - build-essential 
+          - cmake 
+          - libfftw3-dev 
+          - libmbedtls-dev 
+          - libboost-program-options-dev 
+          - libconfig++-dev 
+          - libsctp-dev
+          - libzmq3-dev
+          - make 
+          - gcc 
+          - g++ 
+          - pkg-config 
+          - libyaml-cpp-dev 
+          - libgtest-dev
+        state: present
+
+    - name: Create install directory
+      file:
+        path: "{{ install_path }}"
+        state: directory
+        owner: "{{ install_user }}"
+        group: "{{ install_user }}"
+
+    - name: Clone libzmq
+      git: 
+        repo: "https://github.com/zeromq/libzmq.git"
+        dest: "{{ install_path }}"
+        clone: yes
+      register: libzmq_cloned
+
+    - name: Clone czmq
+      git: 
+        repo: "https://github.com/zeromq/czmq.git"
+        dest: "{{ install_path }}"
+        clone: yes
+      register: libzmq_cloned
+
+    - name: Compile, and install libzmq
+      shell: |
+        cd {{ install_path }}/libzmq
+        ./autogen.sh
+        ./configure
+        make
+        sudo make install
+        sudo ldconfig
+
+    - name: Compile, and install czmq
+      shell: |
+        cd {{ install_path }}/czmq
+        ./autogen.sh
+        ./configure
+        make
+        sudo make install
+        sudo ldconfig
+
+    - name: Update shared libraries cache
+      command: ldconfig
