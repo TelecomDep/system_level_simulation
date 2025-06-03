@@ -29,6 +29,7 @@
           - pkg-config 
           - libyaml-cpp-dev 
           - libgtest-dev
+          - xterm
         state: present
 
     - name: Create install directory
