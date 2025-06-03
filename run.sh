@@ -37,10 +37,10 @@ sudo xterm -hold -e "$CURRENT_DIR/build/broker"
 
 sleep 20
 
-for ue_id in $(seq 11 12); do
-    sudo ip netns exec "ue$P{ue_id}" ip route add default via 10.45.1.1 dev tun_srsue
-    sleep 0.2
-done
+# for ue_id in $(seq 11 12); do
+#     sudo ip netns exec "ue$P{ue_id}" ip route add default via 10.45.1.1 dev tun_srsue
+#     sleep 0.2
+# done
 
 echo "Press Enter to close all programs..."
 # read enter_to_close
