@@ -15,6 +15,7 @@ start_program() {
 }
 
 
+# Start Docker container for Open5GC
+start_program "" "$CFG_PATH/osmo-hlr.cfg"
 
-
- sudo xterm -hold -e python3 "$PWD/tests/zmq_rep_req_srsran/broker.py"
+ sudo xterm -hold -e "./$PWD/build/broker"

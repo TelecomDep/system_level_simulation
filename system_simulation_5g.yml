@@ -1,5 +1,5 @@
 ---
-- name: Build and install Osmocom modules
+- name: Build and install System Level Simulation 
   hosts: localhost
   become: true
   vars:
@@ -41,14 +41,14 @@
     - name: Clone libzmq
       git: 
         repo: "https://github.com/zeromq/libzmq.git"
-        dest: "{{ install_path }}"
+        dest: "{{ install_path }}/libzmq"
         clone: yes
       register: libzmq_cloned
 
     - name: Clone czmq
       git: 
         repo: "https://github.com/zeromq/czmq.git"
-        dest: "{{ install_path }}"
+        dest: "{{ install_path }}/czmq"
         clone: yes
       register: libzmq_cloned
 
@@ -72,3 +72,31 @@
 
     - name: Update shared libraries cache
       command: ldconfig
+
+    - name: Compile, and install srsRAN_Project
+      shell: |
+        cd {{ install_path }}/srsRAN_Project
+        mkdir build
+        cd build
+        cmake ../ -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON
+        make -j16
+
+    - name: Compile, and install srsRAN_4G
+      shell: |
+        cd {{ install_path }}/srsRAN_4G
+        mkdir build
+        cd build
+        cmake ../ -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON
+        make -j16
+    
+    - name: Compile, and install Broker
+      shell: |
+        cd {{ install_path }}
+        mkdir build
+        cd build
+        cmake ../
+        make -j16
+    
+    - name: Copy user.db to srsRAN_Project/docker/open5gs
+      shell: |
+        cp configs/subscriber_db.csv srsRAN_Project/docker/open5gs/

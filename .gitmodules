@@ -1,6 +1,8 @@
 [submodule "srsRAN_Project"]
 	path = srsRAN_Project
 	url = git@github.com:sibsutisTelecomDep/srsRAN_Project.git
+	branch = main
 [submodule "srsRAN_4G"]
 	path = srsRAN_4G
 	url = git@github.com:sibsutisTelecomDep/srsRAN_4G.git
+	branch = master

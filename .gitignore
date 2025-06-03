@@ -1,4 +1,6 @@
-build
-libmzmq_1.0
-libmzmq_2.0
-matlab_1.0
+/build
+/libmzmq_1.0
+/libmzmq_2.0
+/matlab_1.0
+/libzmq
+/czmq
