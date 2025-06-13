@@ -23,25 +23,25 @@ start_program() {
 start_program "$CURRENT_DIR/srsRAN_Project/build/apps/gnb/gnb" "$CFG_PATH/gnb_zmq.yaml"
 
 # Start UEs
-for ue_id in $(seq 11 12); do
+for ue_id in $(seq 1 3); do
     sudo xterm -hold -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue${ue_id}_zmq.conf" &
     pids+=($!)
     sleep 0.2
     sudo ip netns add "ue${ue_id}"
 done
 
-sleep 6
+# sleep 6
 
-sudo xterm -hold -e "$CURRENT_DIR/build/broker"
+# sudo xterm -hold -e "$CURRENT_DIR/build/broker"
 
 
-sleep 20
+# sleep 20
 
 # for ue_id in $(seq 11 12); do
 #     sudo ip netns exec "ue$P{ue_id}" ip route add default via 10.45.1.1 dev tun_srsue
 #     sleep 0.2
 # done
 
-echo "Press Enter to close all programs..."
+# echo "Press Enter to close all programs..."
 # read enter_to_close
 
