@@ -41,6 +41,21 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 ```bash
 sudo docker run hello-world
 ```
+
+### Install Matlab
+
+Download Matlab for Linux (2022b).
+Install:
+```bash
+sudo mkdir -p /media/iso
+sudo mount -o ro,loop ./Matlab913_R2022b_Lin64.iso /media/iso
+cd /media/iso/
+# Здесь необходимо отключить Интернет
+sudo ./install 
+ 
+ # После установки "размонтировать" образ
+ sudo umount /media/iso
+```
 ## Run
 
 

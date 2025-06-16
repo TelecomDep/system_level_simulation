@@ -6,3 +6,8 @@
 	path = srsRAN_4G
 	url = git@github.com:sibsutisTelecomDep/srsRAN_4G.git
 	branch = master
+
+[submodule "QuaDRiGa"]
+	path = QuaDRiGa
+	url = git@github.com:fraunhoferhhi/QuaDRiGa.git
+	branch = main
