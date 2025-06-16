@@ -56,6 +56,12 @@ sudo ./install
  # После установки "размонтировать" образ
  sudo umount /media/iso
 ```
+Copy couple of files:
+```bash
+sudo rm /usr/local/MATLAB/R2022b/bin/glnxa64/matlab_startup_plugins/lmgrimpl/libmwlmgrimpl.so 
+sudo cp libmwlmgrimpl.so /usr/local/MATLAB/R2022b/bin/glnxa64/matlab_startup_plugins/lmgrimpl/
+sudo chown -R nsk MATLAB/
+```
 ## Run
 
 
