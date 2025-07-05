@@ -39,6 +39,11 @@
         owner: "{{ install_user }}"
         group: "{{ install_user }}"
 
+    - name: Install python package 'sionna'
+      ansible.builtin.pip:
+        name: sionna
+      become: yes
+
     - name: Clone libzmq
       git: 
         repo: "https://github.com/zeromq/libzmq.git"
