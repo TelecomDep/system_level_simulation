@@ -1062,7 +1062,7 @@ int main(int argc, char *argv[]){
             // //send data to ues
 
             for(int i = 0; i < num_ues; ++i){
-                send = zmq_send(send_sockets_for_ue_rx[i], all_samples[0].data(), samples_size[0], 0);
+                send = zmq_send(send_sockets_for_ue_rx[i], deconcatenate_samples[0].data(), samples_size[0], 0);
                 printf("send_socket_for_ue_%d_rx [send data] = %d\n", i + 1 ,send);
             }
 
@@ -1083,7 +1083,7 @@ int main(int argc, char *argv[]){
             concatenate_buffer.resize(max_size / 8);
 
             for(int i = 1; i < all_samples.size(); ++i){
-                transform(concatenate_buffer.begin(), concatenate_buffer.end(), all_samples[i].begin(), concatenate_buffer.begin(), std::plus<std::complex<float>>());
+                transform(concatenate_buffer.begin(), concatenate_buffer.end(), deconcatenate_samples[i].begin(), concatenate_buffer.begin(), std::plus<std::complex<float>>());
             }
 
             // //send data to gnb
