@@ -4,3 +4,5 @@
 /matlab_1.0
 /libzmq
 /czmq
+*.out
+*.txt

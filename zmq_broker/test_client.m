@@ -1,49 +1,77 @@
 server = tcpclient("localhost", 4000);
 logFile = fopen("/home/sceptik/Desktop/recv_log.txt", "w");
 
+gnbs = 1;
+ues = 1;
+
+cur_sum_id = 0;
+target_sum_ids = gnbs + ues;
+
+packets = cell(1, length(packets_sizes));
+
 if logFile == -1
     error("File not open");
 end
 
-write(server, "Hello", "string");
+packets_sizes = zeros(1, gnbs + ues, 'int32');
 
 while true
-  
-    if server.NumBytesAvailable > 0
-        data = read(server, server.NumBytesAvailable, "uint8");
-    
-        first_byte = int8(data(1));
 
-        if mod(length(data(2:end)), 2) ~= 0
+    if server.NumBytesAvailable > 0
+
+        // принимаем сначала размер пакетов, чтобы их разделить в дальнейшем
+
+        rcv_packets_sizes = read(server, 4 * (gnbs + ues), "uint8");
+
+        if length(rcv_packets_sizes) ~= (gnbs + ues) * 4
+            fprintf("\nInvalid packet sizes\n");
             continue;
         end
-    
-        floatArray = typecast(data(2:end), 'single');
-    
-        if mod(length(floatArray), 2) ~= 0
-            disp("Invalid data");
-            continue;
+
+        fprintf("\nMATLAB receive packet sizes \t size = %d\n", length(rcv_packets_sizes));
+
+        for i = 1 : numel(rcv_packets_sizes) / 4
+            packets_sizes(i) = typecast(rcv_packets_sizes(4 * (i - 1) + 1 : 4 * i), "int32");
+            fprintf("\nID = %d \t packet size = %d\n", i - 1, packets_sizes(i));
         end
-    
-        realParts = floatArray(1:2:end);
-        imagParts = floatArray(2:2:end);
-        complexArray = complex(realParts, imagParts);
-    
-        re = real(complexArray);
-        im = imag(complexArray);
-        floatArray_out = zeros(1, numel(re) + numel(im), 'single');
-        floatArray_out(1:2:end) = re;
-        floatArray_out(2:2:end) = im;
-    
-        byteArray_out = typecast(floatArray_out, 'uint8');
-        %write(server, byteArray_out, "uint8");
-    
-        if first_byte < 0
-            fprintf(logFile, 'DATA FROM GNB_%d:\n%.4f%+.4fi\n', abs(first_byte) - 1, [real(complexArray); imag(complexArray)]);
-            fprintf("\n");
-        else
-            fprintf(logFile, 'DATA FROM UE_%d:\n%.4f%+.4fi\n', first_byte, [real(complexArray); imag(complexArray)]);
-            fprintf("\n");
-        end
+
+        // принимаем основной пакет (в одном пакете все пакеты устройств)
+
+         rcv_packets = read(server, server.NumBytesAvailable, "uint8");
+
+         if length(rcv_packets) ~= sum(packets_sizes) + gnbs + ues
+             fprintf("\nMATLAB receive invalid packet \t size = %d \t expected size = %d\n", length(rcv_packets), sum(packets_sizes) + gnbs + ues);
+             continue;
+         end
+
+         fprintf("\nMATLAB receive packet \t size = %d\n", length(rcv_packets));
+
+         //разделение пакетов
+
+         for i = 1 : length(packets_sizes)
+            if i == 1
+                start = 1;
+            else
+                start = sum(packets_sizes(1 : i - 1)) + (i - 1) + 1; 
+            end
+
+            End = sum(packets_sizes(1 : i)) + i;  
+            
+            ID = rcv_packets(start);
+            
+            packet_data = rcv_packets(start + 1 : End);
+            
+            packets{i} = packet_data;
+            fprintf("ID = %d \t packet size = %d bytes (expected %d)\n", ...
+                ID, numel(packet_data), packets_sizes(i));
+         end
+
+         //отправка обратно оригинального пакета
+
+         write(server, rcv_packets, "uint8");
+
+         pause(0.05);
+         
     end
+
 end
