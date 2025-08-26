@@ -1,5 +1,10 @@
 # ZMQ_BROKER
 
-- **make** - compilation
-- **make run** - run
-- **make test** - write log in file
+## Сборка
+
+### В главной директории:
+
+1.  **mkdir build**
+2. **cd build**
+3.  **cmake ..**
+4. **make**
