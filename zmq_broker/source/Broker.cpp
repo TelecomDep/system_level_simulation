@@ -145,6 +145,10 @@ std::vector<uint8_t> Broker::to_byte(std::vector<T> data){
 std::vector<int> Broker::get_tx_samples_sizes() const{
     std::vector<int> result;
 
+    for(const gNodeB& el : gnbs){
+        result.push_back(el.get_samples_tx().size());
+    }
+
     for(const UserEquipment& el : ues){
         result.push_back(el.get_samples_tx().size());
     }
@@ -166,12 +170,12 @@ std::vector<int> Broker::get_rx_samples_sizes() const{
 std::vector<std::vector<std::complex<float>>> Broker::get_all_tx_samples() const{
 
     std::vector<std::vector<std::complex<float>>> result;
-
-    for(const UserEquipment& el: ues){
+    
+    for(const gNodeB& el: gnbs){
         result.push_back(el.get_samples_tx());
     }
 
-    for(const gNodeB& el: gnbs){
+    for(const UserEquipment& el: ues){
         result.push_back(el.get_samples_tx());
     }
 
@@ -198,8 +202,8 @@ std::vector<uint8_t> Broker::concatenate_tx_samples(){
 
         offset++;
 
-        memcpy(result.data() + offset, all_samples[i].data(), all_samples[i].size() * sizeof(std::complex<float>));
-        offset += all_samples[i].size() * sizeof(std::complex<float>);
+        memcpy(result.data() + offset, all_samples[i].data(), all_samples[i].size());
+        offset += all_samples[i].size();
     }
 
     return result;
@@ -453,13 +457,13 @@ void Broker::run(){
             size = zmq_recv(req_socket_from_gnb_tx, (void*)buffer_vec.data(), nbytes, 0);
 
             if (size == -1){
-                printf("ERROR: broker received from gNb = %d\n bytes", size);
+                printf("ERROR: broker received from gNb = %d bytes\n", size);
                 continue;
             }
 
             gnbs[0].set_samples_tx(buffer_vec, size);
 
-            printf("broker received from gNb %d\n bytes", size);
+            printf("broker received from gNb %d bytes\n", size);
 
             printf("\nsamples from gnb\n");
             
@@ -478,7 +482,7 @@ void Broker::run(){
                 size = zmq_recv(req_sockets_from_ue_tx[i], (void*)buffer_vec.data(), nbytes, 0);
 
                 if (size == -1){
-                    printf("ERROR: Broker recieved from UE%d %d bytes", i + 1, size);
+                    printf("ERROR: Broker recieved from UE%d %d bytes\n", i + 1, size);
                     continue;
                 }
 
@@ -491,6 +495,10 @@ void Broker::run(){
 
             packet_sizes = get_tx_samples_sizes();
 
+            for(int el : packet_sizes){
+                printf("%d ", el);
+            }
+
             byte_packet_size = to_byte(packet_sizes);
 
             size = send_to_matlab(socket_to_matlab, byte_packet_size, byte_packet_size.size(), id_data, id_size);
@@ -501,7 +509,7 @@ void Broker::run(){
 
             concatenate_samples = concatenate_tx_samples();
 
-            printf("concatenate samples size = %d", concatenate_samples.size());
+            printf("concatenate samples size = %ld", concatenate_samples.size());
 
             // //send all samples to MATLAB
 
@@ -531,7 +539,7 @@ void Broker::run(){
                     continue;
                 }
 
-                ues[i].set_samples_tx(deconcatenate_samples[0], send);
+                ues[i].set_samples_rx(deconcatenate_samples[0], send);
                 printf("send_socket_for_ue_%d_rx [send data] = %d\n", i + 1 ,send);
             }
 
@@ -571,7 +579,6 @@ void Broker::run(){
             continue;
         }
 
-        usleep(100);
     }
 
 }
