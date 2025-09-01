@@ -73,3 +73,23 @@ std::vector<int> ports_to_int(std::vector<std::string> ports){
 
     return result;
 }
+
+bool check_cli_args(int argc, char* argv[], std::string path_to_config){
+
+    if(argc > 2){
+        printf("Invalid arguments");
+        return false;
+    }
+
+    if(argc == 2){
+        path_to_config = argv[1];
+        return true;
+    }
+
+    if(argc == 1){
+        path_to_config = DEFAULT_PATH_TO_CONFIG;
+        return true;
+    }
+
+    return false;
+}
