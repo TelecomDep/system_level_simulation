@@ -74,7 +74,7 @@ std::vector<int> ports_to_int(std::vector<std::string> ports){
     return result;
 }
 
-bool check_cli_args(int argc, char* argv[], std::string path_to_config){
+bool check_cli_args(int argc, char* argv[], std::string& path_to_config){
 
     if(argc > 2){
         printf("Invalid arguments");

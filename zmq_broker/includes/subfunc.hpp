@@ -29,4 +29,4 @@ void my_handler(int s);
 
 std::vector<int> ports_to_int(std::vector<std::string> ports);
 
-bool check_cli_args(int argc, char* argv[], std::string path_to_config);
+bool check_cli_args(int argc, char* argv[], std::string& path_to_config);
