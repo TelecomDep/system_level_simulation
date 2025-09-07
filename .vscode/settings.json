@@ -57,6 +57,7 @@
         "typeinfo": "cpp",
         "map": "cpp",
         "variant": "cpp",
+<<<<<<< HEAD
         "csignal": "cpp",
         "strstream": "cpp",
         "bitset": "cpp",
@@ -72,5 +73,11 @@
         "iomanip": "cpp",
         "span": "cpp",
         "typeindex": "cpp"
+=======
+        "forward_list": "cpp",
+        "list": "cpp",
+        "unordered_set": "cpp",
+        "regex": "cpp"
+>>>>>>> f33d6f3 (try matlab zmq lib)
     }
 }

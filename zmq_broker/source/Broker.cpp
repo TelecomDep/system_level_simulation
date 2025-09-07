@@ -77,7 +77,7 @@ int Broker::send_to_matlab(void *socket_to_matlab, std::vector<uint8_t> &data, i
 
     zmq_msg_close(&new_id_msg);
 
-    size = zmq_send(socket_to_matlab, data.data(), data_size, 0);
+    size = zmq_send(socket_to_matlab, (void*)data.data(), data_size, 0);
 
     return size;
 }
@@ -330,7 +330,7 @@ void Broker::run(){
 
     using cf_t = std::complex<float>;
 
-    int N = 80000;
+    int N = 100000;
 
     int nbytes = N * sizeof(cf_t);
 
@@ -448,8 +448,8 @@ void Broker::run(){
                 printf("req_socket_from_ue_%d_tx [send] = %d\n", i+1 ,send);
             }
 
-
             // start data transmissiona
+            auto start = std::chrono::high_resolution_clock::now();
 
             fill(buffer_vec.begin(), buffer_vec.end(), 0);
 
@@ -532,12 +532,18 @@ void Broker::run(){
             // //send data to ues
 
             for(int i = 0; i < num_ues; ++i){
-                send = zmq_send(send_sockets_for_ue_rx[i], deconcatenate_samples[0].data(), packet_sizes[0], 0);
+                send = zmq_send(send_sockets_for_ue_rx[i], (void*)deconcatenate_samples[0].data(), packet_sizes[0], 0);
 
                 if(send == -1){
                     printf("ERROR: Cannot transmit data to UE%d", i + 1);
                     continue;
                 }
+
+                auto end = std::chrono::high_resolution_clock::now();
+
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+                std::cout << "Data send to ues for" << duration.count() << " ms" << std::endl;
 
                 ues[i].set_samples_rx(deconcatenate_samples[0], send);
                 printf("send_socket_for_ue_%d_rx [send data] = %d\n", i + 1 ,send);

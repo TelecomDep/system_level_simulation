@@ -4,6 +4,7 @@
 #include <cstring>
 #include <algorithm>
 #include <zmq.h>
+#include <chrono>
 
 #include "gNB.hpp"
 #include "UE.hpp"

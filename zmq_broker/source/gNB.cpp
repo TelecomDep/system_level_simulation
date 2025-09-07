@@ -35,12 +35,22 @@ void gNodeB::set_tx_port(int port){
 }
 
 void gNodeB::set_samples_rx(const std::vector<std::complex<float>>& samples, const int size){
+    // int num_elements = size / sizeof(std::complex<float>);
+
+    // if (num_elements > samples.size())
+    //     num_elements = samples.size();
+        
     samples_rx.resize(size);
     samples_rx.assign(samples.begin(), samples.begin() + size);
 }
 
 void gNodeB::set_samples_tx(const std::vector<std::complex<float>>& samples, const int size){
-    samples_rx.resize(size);
+    // int num_elements = size / sizeof(std::complex<float>);
+
+    // if (num_elements > samples.size())
+    //     num_elements = samples.size();
+        
+    samples_tx.resize(size);
     samples_tx.assign(samples.begin(), samples.begin() + size);
 }
 
