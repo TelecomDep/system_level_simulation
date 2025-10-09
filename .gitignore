@@ -6,3 +6,4 @@
 /czmq
 *.out
 *.txt
+/zmq_broker/build
