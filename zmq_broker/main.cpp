@@ -15,7 +15,7 @@ typedef _Complex float cf_t;
 #define ZMQ_MAX_BUFFER_SIZE (NSAMPLES2NBYTES(3072000)) // 10 subframes at 20 MHz
 #define NBYTES_PER_ONE_SAMPLE (NSAMPLES2NBYTES(1)) // 1 sample
 
-#define DEFAULT_PATH_TO_CONFIG "../configs/zmq_broker.conf"
+#define DEFAULT_PATH_TO_CONFIG "../../configs/zmq_broker.conf"
 
 int main(int argc, char *argv[]){
 
