@@ -30,6 +30,9 @@
           - libyaml-cpp-dev 
           - libgtest-dev
           - xterm
+          - openjdk-17-jdk
+          - libtool
+          - maven
         state: present
 
     - name: Create install directory
@@ -39,10 +42,10 @@
         owner: "{{ install_user }}"
         group: "{{ install_user }}"
 
-    - name: Install python package 'sionna'
-      ansible.builtin.pip:
-        name: sionna
-      become: yes
+    # - name: Install python package 'sionna'
+    #   ansible.builtin.pip:
+    #     name: sionna
+    #   become: yes
 
     - name: Clone libzmq
       git: 
@@ -57,6 +60,15 @@
         dest: "{{ install_path }}/czmq"
         clone: yes
       register: libzmq_cloned
+
+    - name: Clone JeroMQ
+      git: 
+        repo: "https://github.com/zeromq/jeromq.git"
+        dest: "{{ install_path }}/jeromq"
+        version: 'v0.6.0'
+        clone: yes
+      register: jeromq_cloned
+
 
     - name: Compile, and install libzmq
       shell: |
@@ -75,6 +87,20 @@
         make
         sudo make install
         sudo ldconfig
+
+    - name: Compile, and install jeromq
+      shell: |
+        cd {{ install_path }}/jeromq
+        export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+        echo $JAVA_HOME
+        mvn clean package
+      
+    
+    - name: Chown
+      shell: |
+        chown -R nsk {{ install_path }}/jeromq
+        chown -R nsk {{ install_path }}/libzmq
+        chown -R nsk {{ install_path }}/czmq
 
     - name: Update shared libraries cache
       command: ldconfig

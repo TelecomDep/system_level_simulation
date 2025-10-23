@@ -62,7 +62,18 @@ sudo rm /usr/local/MATLAB/R2022b/bin/glnxa64/matlab_startup_plugins/lmgrimpl/lib
 sudo cp libmwlmgrimpl.so /usr/local/MATLAB/R2022b/bin/glnxa64/matlab_startup_plugins/lmgrimpl/
 sudo chown -R nsk MATLAB/
 ```
-## Run
+### Install JeroMQ
+
+```bash
+#Установка jeromq
+git clone -b v0.6.0 https://github.com/zeromq/jeromq.git
+cd jeromq
+export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+echo $JAVA_HOME
+mvn clean package
+результат: target/jeromq-0.6.0.jar
+cd ..
+```
 
 
 
