@@ -44,11 +44,11 @@ sudo docker run hello-world
 
 ### Install Matlab
 
-Download Matlab for Linux (2022b).
+Download Matlab for Linux (2025a).
 Install:
 ```bash
 sudo mkdir -p /media/iso
-sudo mount -o ro,loop ./Matlab913_R2022b_Lin64.iso /media/iso
+sudo mount -o ro,loop R2025a_Linux.iso /media/iso
 cd /media/iso/
 # Здесь необходимо отключить Интернет
 sudo ./install 
@@ -58,8 +58,8 @@ sudo ./install
 ```
 Copy couple of files:
 ```bash
-sudo rm /usr/local/MATLAB/R2022b/bin/glnxa64/matlab_startup_plugins/lmgrimpl/libmwlmgrimpl.so 
-sudo cp libmwlmgrimpl.so /usr/local/MATLAB/R2022b/bin/glnxa64/matlab_startup_plugins/lmgrimpl/
+sudo rm /usr/local/MATLAB/R2025a/bin/glnxa64/matlab_startup_plugins/lmgrimpl/libmwlmgrimpl.so 
+sudo cp libmwlmgrimpl.so /usr/local/MATLAB/R2025a/bin/glnxa64/matlab_startup_plugins/lmgrimpl/
 sudo chown -R nsk MATLAB/
 ```
 ### Install JeroMQ
