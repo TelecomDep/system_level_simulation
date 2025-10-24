@@ -5,3 +5,6 @@
 /libzmq
 /czmq
 /jeromq
+*.out
+*.txt
+/zmq_broker/build
