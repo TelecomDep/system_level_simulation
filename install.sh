@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-PLAYBOOK_PATH="system_simulation_5g.yml"
+PLAYBOOK_PATH="install_requirements.yml"
 INVENTORY_FILE="inventory.ini"
 INSTALL_PATH="$(pwd)"
 INSTALL_USER=$(whoami)

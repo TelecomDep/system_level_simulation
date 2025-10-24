@@ -41,7 +41,7 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 ```bash
 sudo docker run hello-world
 ```
-
+Если не работает, устанавливаем по [ссылке](https://timeweb.cloud/tutorials/docker/kak-ustanovit-docker-na-ubuntu-22-04)
 ### Install Matlab
 
 Download Matlab for Linux (2025a).
@@ -62,19 +62,6 @@ sudo rm /usr/local/MATLAB/R2025a/bin/glnxa64/matlab_startup_plugins/lmgrimpl/lib
 sudo cp libmwlmgrimpl.so /usr/local/MATLAB/R2025a/bin/glnxa64/matlab_startup_plugins/lmgrimpl/
 sudo chown -R nsk MATLAB/
 ```
-### Install JeroMQ
-
-```bash
-#Установка jeromq
-git clone -b v0.6.0 https://github.com/zeromq/jeromq.git
-cd jeromq
-export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
-echo $JAVA_HOME
-mvn clean package
-результат: target/jeromq-0.6.0.jar
-cd ..
-```
-
 
 
 
