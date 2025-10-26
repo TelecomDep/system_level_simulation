@@ -2,9 +2,9 @@
 /libmzmq_1.0
 /libmzmq_2.0
 /matlab_1.0
+/matlab/*.jar
 /libzmq
 /czmq
 /jeromq
 *.out
 *.txt
-/zmq_broker/build

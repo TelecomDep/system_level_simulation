@@ -7,103 +7,79 @@
     install_user: "{{ install_user }}"
     debug_mode: false  # true для включения режима отладки
   tasks:
-    # - name: Update and upgrade apt packages
-    #   apt:
-    #     update_cache: yes
-    #     upgrade: yes
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: yes
 
-    # - name: Install required packages
-    #   apt:
-    #     name: 
-    #       - build-essential 
-    #       - cmake 
-    #       - libfftw3-dev 
-    #       - libmbedtls-dev 
-    #       - libboost-program-options-dev 
-    #       - libconfig++-dev 
-    #       - libsctp-dev
-    #       - libzmq3-dev
-    #       - make 
-    #       - gcc 
-    #       - g++ 
-    #       - pkg-config 
-    #       - libyaml-cpp-dev 
-    #       - libgtest-dev
-    #       - xterm
-    #       - openjdk-17-jdk
-    #       - libtool
-    #       - maven
-    #     state: present
+    - name: Install required packages
+      apt:
+        name: 
+          - build-essential 
+          - cmake 
+          - libfftw3-dev 
+          - libmbedtls-dev 
+          - libboost-program-options-dev 
+          - libconfig++-dev 
+          - libsctp-dev
+          - libzmq3-dev
+          - make 
+          - gcc 
+          - g++ 
+          - pkg-config 
+          - libyaml-cpp-dev 
+          - libgtest-dev
+          - xterm
+          - openjdk-17-jdk
+          - libtool
+          - maven
+          - nlohmann-json3-dev
+        state: present
 
-    # - name: Create install directory
-    #   file:
-    #     path: "{{ install_path }}"
-    #     state: directory
-    #     owner: "{{ install_user }}"
-    #     group: "{{ install_user }}"
+    - name: Create install directory
+      file:
+        path: "{{ install_path }}"
+        state: directory
+        owner: "{{ install_user }}"
+        group: "{{ install_user }}"
 
-    # # - name: Install python package 'sionna'
-    # #   ansible.builtin.pip:
-    # #     name: sionna
-    # #   become: yes
+    # - name: Install python package 'sionna'
+    #   ansible.builtin.pip:
+    #     name: sionna
+    #   become: yes
 
-    # - name: Clone libzmq
-    #   git: 
-    #     repo: "https://github.com/zeromq/libzmq.git"
-    #     dest: "{{ install_path }}/libzmq"
-    #     clone: yes
-    #   register: libzmq_cloned
+    - name: Compile, and install libzmq
+      shell: |
+        cd {{ install_path }}/third_party/libzmq
+        ./autogen.sh
+        ./configure
+        make
+        sudo make install
+        sudo ldconfig
 
-    # - name: Clone czmq
-    #   git: 
-    #     repo: "https://github.com/zeromq/czmq.git"
-    #     dest: "{{ install_path }}/czmq"
-    #     clone: yes
-    #   register: libzmq_cloned
+    - name: Compile, and install czmq
+      shell: |
+        cd {{ install_path }}/third_party/czmq
+        ./autogen.sh
+        ./configure
+        make
+        sudo make install
+        sudo ldconfig
 
-    # - name: Clone JeroMQ
-    #   git: 
-    #     repo: "https://github.com/zeromq/jeromq.git"
-    #     dest: "{{ install_path }}/jeromq"
-    #     version: 'v0.6.0'
-    #     clone: yes
-    #   register: jeromq_cloned
-
-
-    # - name: Compile, and install libzmq
-    #   shell: |
-    #     cd {{ install_path }}/libzmq
-    #     ./autogen.sh
-    #     ./configure
-    #     make
-    #     sudo make install
-    #     sudo ldconfig
-
-    # - name: Compile, and install czmq
-    #   shell: |
-    #     cd {{ install_path }}/czmq
-    #     ./autogen.sh
-    #     ./configure
-    #     make
-    #     sudo make install
-    #     sudo ldconfig
-
-    # - name: Compile, and install jeromq
-    #   shell: |
-    #     cd {{ install_path }}/jeromq
-    #     export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
-    #     echo $JAVA_HOME
-    #     mvn clean package
+    - name: Compile, and install jeromq
+      shell: |
+        cd {{ install_path }}/third_party/jeromq
+        export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+        echo $JAVA_HOME
+        mvn clean package
+        cp target/jeromq-0.6.0.jar {{ install_path }}/matlab
       
-    
-    # - name: Chown
-    #   shell: |
-    #     chown -R nsk {{ install_path }}/jeromq
-    #     chown -R nsk {{ install_path }}/libzmq
-    #     chown -R nsk {{ install_path }}/czmq
+    - name: Chown
+      shell: |
+        chown -R {{ install_user }} {{ install_path }}/third_party
 
-    # - name: Update shared libraries cache
-    #   command: ldconfig
+    - name: Update shared libraries cache
+      command: ldconfig
 
     - name: Compile, and install srsRAN_Project
       shell: |
@@ -120,6 +96,11 @@
         cd build
         cmake ../ -DENABLE_WERROR=False -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON
         make -j16
+
+    - name: Chown
+      shell: |
+        chown -R {{ install_user }} {{ install_path }}/srsRAN_4G
+        chown -R {{ install_user }} {{ install_path }}/srsRAN_Project
     
     # - name: Compile, and install Broker
     #   shell: |

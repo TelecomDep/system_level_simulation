@@ -1,9 +1,11 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.5)
 project(MobileSystem)
 set(CMAKE_C_STANDARD 99)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
 set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -g -O0")
+
+find_package(nlohmann_json 3.11.3 REQUIRED) # to serialize from Json to C++ object
 
 add_executable(main
     zmq_broker/main.cpp
@@ -21,4 +23,5 @@ target_link_libraries(main zmq pthread boost_program_options)
 target_include_directories(main PRIVATE includes)
 
 target_link_libraries(broker zmq pthread boost_program_options) 
+target_link_libraries(broker nlohmann_json::nlohmann_json)
 target_include_directories(broker PRIVATE includes)
