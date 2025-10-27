@@ -23,6 +23,5 @@ struct broker_args{
 
 int broker_config_parser(broker_args* args, std::string config_file);
 
-void my_handler(int s);
 
 std::vector<int> ports_to_int(std::vector<std::string> ports);

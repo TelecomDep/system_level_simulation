@@ -5,15 +5,17 @@
 
 class UserEquipment {
     private:
+        int id;
         int rx_port;
         int tx_port;
         std::vector<std::complex<float>> samples_rx;
         std::vector<std::complex<float>> samples_tx;
 
     public:
-        UserEquipment(int port_rx, int port_tx);
+        UserEquipment(int port_rx, int port_tx, int id);
 
         //getters
+        int get_id();
         int get_rx_port() const;
         int get_tx_port() const;
         const std::vector<std::complex<float>>& get_samples_rx() const;

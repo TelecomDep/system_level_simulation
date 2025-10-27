@@ -12,9 +12,9 @@
 #include <algorithm>
 #include <time.h>
 
-#include <fstream>
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
+#include "includes/Broker.hpp"
+#include "includes/subfunc.hpp"
+
 
 void my_handler(int s){
     printf("Caught signal %d\n",s);
@@ -32,34 +32,21 @@ typedef _Complex float cf_t;
 #define ZMQ_MAX_BUFFER_SIZE (NSAMPLES2NBYTES(3072000)) // 10 subframes at 20 MHz
 #define NBYTES_PER_ONE_SAMPLE (NSAMPLES2NBYTES(1)) // 1 sample
 
-struct equipment {
-    int id;
-    int type;
-    int rx_port;
-    int tx_port;
-};
-
-// Define how to convert a Person object to JSON
-void to_json(json& j, const equipment& p) {
-    j = json{{"id", p.id}, {"type", p.type}, {"rx_port", p.rx_port}, {"tx_port", p.tx_port}};
-}
-
-// Define how to convert JSON to a Person object
-void from_json(const json& j, equipment& p) {
-    j.at("id").get_to(p.id);
-    j.at("type").get_to(p.type);
-    j.at("rx_port").get_to(p.rx_port);
-    j.at("tx_port").get_to(p.tx_port);
-}
-
 
 int main(){
 
-    std::ifstream f("../configs/broker.json");
-    json data = json::parse(f);
+    struct sigaction sigIntHandler;
 
-    std::string s = data.dump();
-    std::cout << "json size: " << data.size() << std::endl << "data.dump() = " << s << std::endl;
+    sigIntHandler.sa_handler = my_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+ 
+    sigaction(SIGINT, &sigIntHandler, NULL);
+
+    std::string config_file_path = "../configs/broker.json";
+    Broker broker = Broker(config_file_path);
+    
+    broker.run();
 
     return 0;
 }

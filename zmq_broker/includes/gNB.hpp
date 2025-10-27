@@ -5,13 +5,14 @@
 
 class gNodeB {
     private:
+        int id;
         int rx_port;
         int tx_port;
         std::vector<std::complex<float>> samples_rx;
         std::vector<std::complex<float>> samples_tx;
 
     public:
-        gNodeB(int port_rx, int port_tx);
+        gNodeB(int port_rx, int port_tx, int id);
 
         //getters
         int get_rx_port() const;

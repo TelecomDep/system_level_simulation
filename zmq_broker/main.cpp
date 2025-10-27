@@ -1,9 +1,7 @@
 #include <iostream>
-
 #include <csignal>
 
 #include "includes/Broker.hpp"
-
 #include "includes/subfunc.hpp"
 
 
@@ -87,13 +85,13 @@ int main(int argc, char *argv[]){
 
     //create ues
     for(int i = 0; i < num_ues; ++i){
-        ues.push_back(UserEquipment(ue_rx_port[i], ue_tx_port[i]));
+        ues.push_back(UserEquipment(ue_rx_port[i], ue_tx_port[i], 1));
     }
 
     //create gnb
     std::vector<gNodeB> gnbs;
 
-    gnbs.push_back(gNodeB(args.gnb_rx_port, args.gnb_tx_port));
+    gnbs.push_back(gNodeB(args.gnb_rx_port, args.gnb_tx_port, 1));
 
     std::cout << "\n========= Start ZMQ =========\n";
 

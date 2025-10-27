@@ -13,10 +13,10 @@
 	url = git@github.com:fraunhoferhhi/QuaDRiGa.git
 	branch = main
 
-# [submodule "json"]
-# 	path = third_party/json
-# 	url = git@github.com:nlohmann/json.git
-# 	branch = v3.12.0
+[submodule "json"]
+	path = third_party/json
+	url = git@github.com:nlohmann/json.git
+	branch = v3.12.0
 
 [submodule "third_party/libzmq"]
 	path = third_party/libzmq
@@ -30,3 +30,6 @@
 	path = third_party/jeromq
 	url = https://github.com/zeromq/jeromq.git
 	branch = v0.6.0
+[submodule "third_party/json"]
+	path = third_party/json
+	url = git@github.com:nlohmann/json.git

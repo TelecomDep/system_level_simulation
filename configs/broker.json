@@ -1,20 +1,27 @@
 {
-  "ue1": {
-    "id": 1,
-    "type": 1,
-    "rx_port": [2110],
-    "tx_port": [2111]
-  },
-  "ue2": {
-    "id": 2,
-    "type": 1,
-    "rx_port": [2210],
-    "tx_port": [2211]
-  },
-  "gnb1": {
-    "id": 1,
-    "type": 0,
-    "rx_port": [2001],
-    "tx_port": [2000]
-  }
+  "num_ues": 2,
+  "num_gnbs": 1,
+  "ues":[
+    {
+      "id": 1,
+      "type": 1,
+      "rx_port": 2110,
+      "tx_port": 2111
+    },
+    {
+      "id": 2,
+      "type": 1,
+      "rx_port": 2210,
+      "tx_port": 2211
+    }
+  ],
+  "gnbs":
+  [
+    {
+      "id": 1,
+      "type": 0,
+      "rx_port": 2001,
+      "tx_port": 2000
+    }
+  ]
 }

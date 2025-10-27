@@ -2,8 +2,9 @@
 #include "../includes/gNB.hpp"
 
 //class init
-gNodeB::gNodeB(int port_rx, int port_tx): 
+gNodeB::gNodeB(int port_rx, int port_tx, int _id):
     rx_port(port_rx), tx_port(port_tx){
+    id = _id;
     samples_rx = std::vector<std::complex<float>>();
     samples_tx = std::vector<std::complex<float>>();
 }

@@ -46,12 +46,6 @@ int broker_config_parser(broker_args* args, std::string config_file){
 
 }
 
-void my_handler(int s){
-    printf("\n===== End ZMQ =====\n");
-    
-    exit(1); 
-}
-
 std::vector<int> ports_to_int(std::vector<std::string> ports){
     std::vector<int> result;
 

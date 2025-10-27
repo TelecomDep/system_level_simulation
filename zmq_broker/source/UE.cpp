@@ -2,7 +2,8 @@
 #include "../includes/UE.hpp"
 
 //class init
-UserEquipment::UserEquipment(int port_rx, int port_tx){
+UserEquipment::UserEquipment(int port_rx, int port_tx, int _id){
+    id = _id;
     rx_port = port_rx;
     tx_port = port_tx;
     samples_rx = std::vector<std::complex<float>>();
@@ -10,6 +11,11 @@ UserEquipment::UserEquipment(int port_rx, int port_tx){
 }
 
 //getters
+
+int UserEquipment::get_id(){
+    return id;
+}
+
 int UserEquipment::get_rx_port() const {
     return rx_port;
 }

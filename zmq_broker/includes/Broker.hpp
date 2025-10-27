@@ -33,6 +33,7 @@ class Broker{
     public:
 
         Broker(std::vector<UserEquipment>& _ues, std::vector<gNodeB>& _gnbs, int _matlab_port = -1);
+        Broker(std::string &config_file);
         Broker();
 
         //getters

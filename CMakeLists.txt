@@ -5,22 +5,27 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
 set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -g -O0")
 
-find_package(nlohmann_json 3.11.3 REQUIRED) # to serialize from Json to C++ object
+# find_package(nlohmann_json 3.11.3 REQUIRED) # to serialize from Json to C++ object
+add_subdirectory(third_party/json)
 
-add_executable(main
-    zmq_broker/main.cpp
+# add_executable(main
+#     zmq_broker/main.cpp
+#     zmq_broker/source/Broker.cpp
+#     zmq_broker/source/gNB.cpp
+#     zmq_broker/source/UE.cpp
+#     zmq_broker/source/subfuncs.cpp
+# )
+
+add_executable(broker
+    zmq_broker/old_broker.cpp
     zmq_broker/source/Broker.cpp
     zmq_broker/source/gNB.cpp
     zmq_broker/source/UE.cpp
     zmq_broker/source/subfuncs.cpp
 )
 
-add_executable(broker
-    zmq_broker/old_broker.cpp
-)
-
-target_link_libraries(main zmq pthread boost_program_options) 
-target_include_directories(main PRIVATE includes)
+# target_link_libraries(main zmq pthread boost_program_options) 
+# target_include_directories(main PRIVATE includes)
 
 target_link_libraries(broker zmq pthread boost_program_options) 
 target_link_libraries(broker nlohmann_json::nlohmann_json)

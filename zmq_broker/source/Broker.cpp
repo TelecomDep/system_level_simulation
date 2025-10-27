@@ -1,5 +1,10 @@
 #include "../includes/Broker.hpp"
 
+#include <fstream>
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
+
 int Broker::broker_count = 0;
 
 Broker::Broker(std::vector<UserEquipment>& _ues, std::vector<gNodeB>& _gnbs, int _matlab_port){
@@ -17,6 +22,22 @@ Broker::Broker(std::vector<UserEquipment>& _ues, std::vector<gNodeB>& _gnbs, int
         matlab_port = _matlab_port;
     }
 
+}
+
+Broker::Broker(std::string &config_file)
+{
+    std::ifstream f(config_file);
+    json data = json::parse(f);
+
+    for (const auto& item : data["ues"])
+    {
+        ues.push_back(UserEquipment(item["rx_port"], item["tx_port"], item["id"]));
+    }
+
+    for (const auto& item : data["gnbs"])
+    {
+        gnbs.push_back(gNodeB(item["rx_port"], item["tx_port"], item["id"]));
+    }
 }
 
 Broker::Broker(){};
