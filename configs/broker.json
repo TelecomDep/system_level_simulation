@@ -23,5 +23,11 @@
       "rx_port": 2001,
       "tx_port": 2000
     }
-  ]
+  ],
+  "matlab":
+    {
+      "id": 1,
+      "type": 2,
+      "server_port": 4001
+    }
 }

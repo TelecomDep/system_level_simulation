@@ -7,23 +7,6 @@ using json = nlohmann::json;
 
 int Broker::broker_count = 0;
 
-Broker::Broker(std::vector<UserEquipment>& _ues, std::vector<gNodeB>& _gnbs, int _matlab_port){
-
-    if(broker_count == 1){
-        printf("Broker already exist");
-    }
-    
-    else{
-        ues = _ues;
-        gnbs = _gnbs;
-    
-        broker_count++;
-
-        matlab_port = _matlab_port;
-    }
-
-}
-
 Broker::Broker(std::string &config_file)
 {
     std::ifstream f(config_file);
@@ -31,34 +14,19 @@ Broker::Broker(std::string &config_file)
 
     for (const auto& item : data["ues"])
     {
-        ues.push_back(UserEquipment(item["rx_port"], item["tx_port"], item["id"]));
+        ues.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
     }
 
     for (const auto& item : data["gnbs"])
     {
-        gnbs.push_back(gNodeB(item["rx_port"], item["tx_port"], item["id"]));
+        gnbs.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
     }
+
+    matlab_port = data["matlab"]["server_port"];
+    std::cout << "matlab port = " << matlab_port << std::endl;
 }
 
 Broker::Broker(){};
-
-//geters
-std::vector<gNodeB> Broker::get_list_of_gnbs() const{
-    return gnbs;
-}
-
-std::vector<UserEquipment> Broker::get_list_of_ues() const{
-    return ues;
-}
-
-//setters
-void Broker::set_list_of_gnbs(std::vector<gNodeB> _gnbs){
-    gnbs = _gnbs;
-}
-
-void Broker::set_list_of_ues(std::vector<UserEquipment> _ues){
-    ues = _ues;
-}
 
 std::vector<std::complex<float>> Broker::byte_to_complex(const std::vector<uint8_t>& buffer) {
     
@@ -166,11 +134,11 @@ std::vector<uint8_t> Broker::to_byte(std::vector<T> data){
 std::vector<int> Broker::get_tx_samples_sizes() const{
     std::vector<int> result;
 
-    for(const gNodeB& el : gnbs){
+    for(const Equipment& el : gnbs){
         result.push_back(el.get_samples_tx().size());
     }
 
-    for(const UserEquipment& el : ues){
+    for(const Equipment& el : ues){
         result.push_back(el.get_samples_tx().size());
     }
 
@@ -180,7 +148,7 @@ std::vector<int> Broker::get_tx_samples_sizes() const{
 std::vector<int> Broker::get_rx_samples_sizes() const{
     std::vector<int> result;
 
-    for(const UserEquipment& el : ues){
+    for(const Equipment& el : ues){
         result.push_back(el.get_samples_rx().size());
     }
 
@@ -192,11 +160,11 @@ std::vector<std::vector<std::complex<float>>> Broker::get_all_tx_samples() const
 
     std::vector<std::vector<std::complex<float>>> result;
     
-    for(const gNodeB& el: gnbs){
+    for(const Equipment& el: gnbs){
         result.push_back(el.get_samples_tx());
     }
 
-    for(const UserEquipment& el: ues){
+    for(const Equipment& el: ues){
         result.push_back(el.get_samples_tx());
     }
 
@@ -245,6 +213,35 @@ std::vector<std::vector<std::complex<float>>> Broker::deconcatenate_all_samples(
 
     return result;
 
+}
+
+void Broker::initialize_zmq_sockets()
+{
+    zmq_context = zmq_ctx_new();
+
+    std::string matlab_server = "tcp://localhost:" + std::to_string(matlab_port);
+    matlab_req_socket = zmq_socket (zmq_context, ZMQ_REQ);
+    int ret = zmq_connect(matlab_req_socket, matlab_server.c_str());
+    if(ret < 0){
+        printf("Failed to connect to Matlab\n");
+        exit(1);
+    } else {
+        printf("CONNECTED to Matlab\n");
+    }
+
+    for(auto gnb: gnbs){
+        gnb.initialize_sockets(zmq_context);
+    }
+
+    for(auto ue : ues){
+        ue.initialize_sockets(zmq_context);
+    }
+
+}
+
+void Broker::start_the_proxy()
+{
+    initialize_zmq_sockets();
 }
 
 void Broker::run(){

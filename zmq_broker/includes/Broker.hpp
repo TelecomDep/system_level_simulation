@@ -7,14 +7,27 @@
 
 #include "gNB.hpp"
 #include "UE.hpp"
+#include "Equipment.hpp"
+
+#define BUFFER_MAX 1024 * 1024
+
+
+typedef _Complex float cf_t;
+#define NSAMPLES2NBYTES(X) (((uint32_t)(X)) * sizeof(cf_t))
+#define NBYTES2NSAMPLES(X) ((X) / sizeof(cf_t))
+#define ZMQ_MAX_BUFFER_SIZE (NSAMPLES2NBYTES(3072000)) // 10 subframes at 20 MHz
+#define NBYTES_PER_ONE_SAMPLE (NSAMPLES2NBYTES(1)) // 1 sample
+
 
 class Broker{
     private:
     
-        std::vector<UserEquipment> ues;
-        std::vector<gNodeB> gnbs;
-
+        std::vector<Equipment> ues;
+        std::vector<Equipment> gnbs;
         int matlab_port;
+
+        void *zmq_context;
+        void *matlab_req_socket;
 
         static int broker_count;
 
@@ -30,8 +43,10 @@ class Broker{
         std::vector<uint8_t> concatenate_tx_samples();
         std::vector<std::vector<std::complex<float>>> deconcatenate_all_samples(std::vector<uint8_t> &all_samples, std::vector<int> packet_sizes);
 
-    public:
+    private:
+        void initialize_zmq_sockets();
 
+    public:
         Broker(std::vector<UserEquipment>& _ues, std::vector<gNodeB>& _gnbs, int _matlab_port = -1);
         Broker(std::string &config_file);
         Broker();
@@ -52,4 +67,5 @@ class Broker{
         void set_list_of_gnbs(std::vector<gNodeB> _gnbs);
 
         void run();
+        void start_the_proxy();
 };

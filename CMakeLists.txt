@@ -18,6 +18,7 @@ add_subdirectory(third_party/json)
 
 add_executable(broker
     zmq_broker/old_broker.cpp
+    zmq_broker/source/Equipment.cpp
     zmq_broker/source/Broker.cpp
     zmq_broker/source/gNB.cpp
     zmq_broker/source/UE.cpp

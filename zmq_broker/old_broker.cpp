@@ -23,16 +23,6 @@ void my_handler(int s){
 
 }
 
-#define BUFFER_MAX 1024 * 1024
-
-
-typedef _Complex float cf_t;
-#define NSAMPLES2NBYTES(X) (((uint32_t)(X)) * sizeof(cf_t))
-#define NBYTES2NSAMPLES(X) ((X) / sizeof(cf_t))
-#define ZMQ_MAX_BUFFER_SIZE (NSAMPLES2NBYTES(3072000)) // 10 subframes at 20 MHz
-#define NBYTES_PER_ONE_SAMPLE (NSAMPLES2NBYTES(1)) // 1 sample
-
-
 int main(){
 
     struct sigaction sigIntHandler;
@@ -45,11 +35,13 @@ int main(){
 
     std::string config_file_path = "../configs/broker.json";
     Broker broker = Broker(config_file_path);
-    
-    broker.run();
+
+    broker.start_the_proxy();
+    // broker.run();
 
     return 0;
 }
+
 // int main(int argc, char *argv[]){
 
 //     struct sigaction sigIntHandler;
