@@ -7,12 +7,6 @@
       "type": 1,
       "rx_port": 2110,
       "tx_port": 2111
-    },
-    {
-      "id": 2,
-      "type": 1,
-      "rx_port": 2210,
-      "tx_port": 2211
     }
   ],
   "gnbs":

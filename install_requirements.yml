@@ -33,7 +33,7 @@
           - openjdk-17-jdk
           - libtool
           - maven
-          - nlohmann-json3-dev
+          # - nlohmann-json3-dev
         state: present
 
     - name: Create install directory
@@ -67,9 +67,10 @@
         sudo ldconfig
 
     - name: Compile, and install jeromq
+      environment:
+        JAVA_HOME: "/usr/lib/jvm/java-17-openjdk-amd64"
       shell: |
         cd {{ install_path }}/third_party/jeromq
-        export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
         echo $JAVA_HOME
         mvn clean package
         cp target/jeromq-0.6.0.jar {{ install_path }}/matlab

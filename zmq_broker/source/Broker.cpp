@@ -5,25 +5,25 @@
 using json = nlohmann::json;
 
 
-int Broker::broker_count = 0;
-
-Broker::Broker(std::string &config_file)
+Broker::Broker(std::string &config_file, std::vector<Equipment>& _ues, std::vector<Equipment>& _gnbs)
 {
-    std::ifstream f(config_file);
-    json data = json::parse(f);
+    // std::ifstream f(config_file);
+    // json data = json::parse(f);
+    ues = _ues;
+    gnbs = _gnbs;
 
-    for (const auto& item : data["ues"])
-    {
-        ues.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
-    }
+    // for (const auto& item : data["ues"])
+    // {
+    //     ues.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
+    // }
 
-    for (const auto& item : data["gnbs"])
-    {
-        gnbs.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
-    }
+    // for (const auto& item : data["gnbs"])
+    // {
+    //     gnbs.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
+    // }
 
-    matlab_port = data["matlab"]["server_port"];
-    std::cout << "matlab port = " << matlab_port << std::endl;
+    // matlab_port = data["matlab"]["server_port"];
+    // std::cout << "matlab port = " << matlab_port << std::endl;
 }
 
 Broker::Broker(){};
@@ -131,72 +131,72 @@ std::vector<uint8_t> Broker::to_byte(std::vector<T> data){
     return result;
 }
 
-std::vector<int> Broker::get_tx_samples_sizes() const{
-    std::vector<int> result;
+// std::vector<int> Broker::get_tx_samples_sizes() const{
+//     std::vector<int> result;
 
-    for(const Equipment& el : gnbs){
-        result.push_back(el.get_samples_tx().size());
-    }
+//     for(const Equipment& el : gnbs){
+//         result.push_back(el.get_samples_tx().size());
+//     }
 
-    for(const Equipment& el : ues){
-        result.push_back(el.get_samples_tx().size());
-    }
+//     for(const Equipment& el : ues){
+//         result.push_back(el.get_samples_tx().size());
+//     }
 
-    return result;
-}
+//     return result;
+// }
 
-std::vector<int> Broker::get_rx_samples_sizes() const{
-    std::vector<int> result;
+// std::vector<int> Broker::get_rx_samples_sizes() const{
+//     std::vector<int> result;
 
-    for(const Equipment& el : ues){
-        result.push_back(el.get_samples_rx().size());
-    }
+//     for(const Equipment& el : ues){
+//         result.push_back(el.get_samples_rx().size());
+//     }
 
-    return result;
-}
+//     return result;
+// }
 
-//get tx samples from ues and gnbs
-std::vector<std::vector<std::complex<float>>> Broker::get_all_tx_samples() const{
+// //get tx samples from ues and gnbs
+// std::vector<std::vector<std::complex<float>>> Broker::get_all_tx_samples() const{
 
-    std::vector<std::vector<std::complex<float>>> result;
+//     std::vector<std::vector<std::complex<float>>> result;
     
-    for(const Equipment& el: gnbs){
-        result.push_back(el.get_samples_tx());
-    }
+//     for(const Equipment& el: gnbs){
+//         result.push_back(el.get_samples_tx());
+//     }
 
-    for(const Equipment& el: ues){
-        result.push_back(el.get_samples_tx());
-    }
+//     for(const Equipment& el: ues){
+//         result.push_back(el.get_samples_tx());
+//     }
 
-    return result;
-}
+//     return result;
+// }
 
-std::vector<uint8_t> Broker::concatenate_tx_samples(){
+// std::vector<uint8_t> Broker::concatenate_tx_samples(){
 
-    std::vector<std::vector<std::complex<float>>> all_samples = get_all_tx_samples();
+//     std::vector<std::vector<std::complex<float>>> all_samples = get_all_tx_samples();
 
-    int len = 0; //len samples in bytes
+//     int len = 0; //len samples in bytes
 
-    for(const std::vector<std::complex<float>>& el : all_samples){
-        len += el.size() + 1;                                           // +1 for ID
-    }
+//     for(const std::vector<std::complex<float>>& el : all_samples){
+//         len += el.size() + 1;                                           // +1 for ID
+//     }
 
-    std::vector<uint8_t> result(len);
+//     std::vector<uint8_t> result(len);
 
-    int offset = 0;
+//     int offset = 0;
 
-    for(int i = 0; i < all_samples.size(); ++i){
+//     for(int i = 0; i < all_samples.size(); ++i){
 
-        result[offset] = static_cast<uint8_t>(i);
+//         result[offset] = static_cast<uint8_t>(i);
 
-        offset++;
+//         offset++;
 
-        memcpy(result.data() + offset, all_samples[i].data(), all_samples[i].size());
-        offset += all_samples[i].size();
-    }
+//         memcpy(result.data() + offset, all_samples[i].data(), all_samples[i].size());
+//         offset += all_samples[i].size();
+//     }
 
-    return result;
-}
+//     return result;
+// }
 
 
 std::vector<std::vector<std::complex<float>>> Broker::deconcatenate_all_samples(std::vector<uint8_t> &all_samples, std::vector<int> packet_sizes) {
@@ -219,384 +219,497 @@ void Broker::initialize_zmq_sockets()
 {
     zmq_context = zmq_ctx_new();
 
-    std::string matlab_server = "tcp://localhost:" + std::to_string(matlab_port);
-    matlab_req_socket = zmq_socket (zmq_context, ZMQ_REQ);
-    int ret = zmq_connect(matlab_req_socket, matlab_server.c_str());
-    if(ret < 0){
-        printf("Failed to connect to Matlab\n");
-        exit(1);
+    // std::string matlab_server = "tcp://localhost:" + std::to_string(matlab_port);
+    // matlab_req_socket = zmq_socket (zmq_context, ZMQ_REQ);
+    // int ret = zmq_connect(matlab_req_socket, matlab_server.c_str());
+    // if(ret < 0){
+    //     printf("Failed to connect to Matlab\n");
+    //     exit(1);
+    // } else {
+    //     printf("CONNECTED to Matlab\n");
+    // }
+
+    gnbs[0].initialize_sockets(zmq_context);
+    ues[0].initialize_sockets(zmq_context);
+    // for(auto gnb: gnbs){
+    //     gnb.initialize_sockets(zmq_context);
+    // }
+
+    // for(auto ue : ues){
+    //     ue.initialize_sockets(zmq_context);
+    // }
+
+}
+
+bool Broker::recv_conn_accepts()
+{
+    broker_acc_count = 0;
+    for (auto gnb : gnbs)
+    {
+        gnb.recv_conn_accept();
+        broker_acc_count += gnb.is_ready_to_send();
+    }
+    for(auto ue : ues)
+    {
+        ue.recv_conn_accept();
+        broker_acc_count += ue.is_ready_to_send();
+    }
+
+    if(broker_acc_count == gnbs.size() + ues.size()){
+        return true;
     } else {
-        printf("CONNECTED to Matlab\n");
+        printf("Not all connection Accepts are received\n");
+        return false;
     }
+}
 
-    for(auto gnb: gnbs){
-        gnb.initialize_sockets(zmq_context);
+bool Broker::send_conn_accepts()
+{
+    for (auto gnb : gnbs)
+    {
+        gnb.send_conn_accept();
     }
-
-    for(auto ue : ues){
-        ue.initialize_sockets(zmq_context);
+    
+    for(auto ue : ues)
+    {
+        ue.send_conn_accept();
     }
+    return true;
+}
 
+bool Broker::recv_samples_from_gNb()
+{
+    for (auto gnb : gnbs)
+    {
+        gnb.recv_samples_from_tx(buff_size);
+    }
+    return true;
+}
+
+bool Broker::send_samples_to_all_ues()
+{
+    for(auto ue : ues)
+    {
+        ue.send_samples_to_rx(gnbs[0].get_samples_tx(), gnbs[0].get_samples_tx().size());
+    }
+    return true;
+}
+
+bool Broker::recv_samples_from_ues()
+{
+    for(auto ue : ues)
+    {
+        ue.recv_samples_from_tx(buff_size);
+    }
+    return true;
+}
+
+bool Broker::send_samples_to_gnb()
+{
+    for (auto gnb : gnbs)
+    {
+        gnb.send_samples_to_rx(ues[0].get_samples_tx(), gnbs[0].get_samples_tx().size());
+    }
+    return true;
+}
+
+
+void Broker::run_the_world()
+{
+    
+    while(is_running){
+        
+        if (recv_conn_accepts())
+        {
+            //sleep(1);
+            printf("1\n");
+            send_conn_accepts();
+            printf("12\n");
+            recv_samples_from_gNb();
+            printf("13\n");
+            send_samples_to_all_ues();
+            printf("14\n");
+            recv_samples_from_ues();
+            printf("15\n");
+            send_samples_to_gnb();
+            printf("16\n");
+            // 1.
+            // Получить сэмплы от gNb
+            // Отправить сэмплы на Matlab
+            // Получить обновленные сэмплы с Matlab для каждого UE
+            // Отправить каждому UE свои сэмплы после Matlab'а
+
+            // 2. 
+            // Получить от каждого UE сэмплы
+            // Отправить от каждого UE сэмплы в Matlab
+            // Получить из Matlab'а один массив (суммируем сэмплы всех UE (+ канал)) сэмплов
+            // Отправить 1 общий массив в сторону gNb
+
+            // 3. 
+            // Смотрим на результаты
+        }
+    }
 }
 
 void Broker::start_the_proxy()
 {
     initialize_zmq_sockets();
+    run_the_world();
 }
 
-void Broker::run(){
+// void Broker::run(){
 
-    if(!(gnbs.size() > 0 && ues.size() > 0)){
-        printf("Broker dont have gnbs or ues list");
-        return;
-    }
+//     if(!(gnbs.size() > 0 && ues.size() > 0)){
+//         printf("Broker dont have gnbs or ues list");
+//         return;
+//     }
 
-    int num_ues = ues.size();
-    int num_gnbs = gnbs.size();
+//     int num_ues = ues.size();
+//     int num_gnbs = gnbs.size();
 
-    bool matlab_enable = matlab_port == -1 ? false : true;
+//     bool matlab_enable = matlab_port == -1 ? false : true;
 
-    std::string addr_recv_port_gnb_tx = "tcp://localhost:" + std::to_string(gnbs[0].get_tx_port());
-    std::string addr_send_port_gnb_rx = "tcp://*:" + std::to_string(gnbs[0].get_rx_port());
+//     std::string addr_recv_port_gnb_tx = "tcp://localhost:" + std::to_string(gnbs[0].get_tx_port());
+//     std::string addr_send_port_gnb_rx = "tcp://*:" + std::to_string(gnbs[0].get_rx_port());
 
-    //Address
-    std::vector<std::string> addr_recv_ports_ue_tx(num_ues);
-    std::vector<std::string> addr_send_ports_ue_rx(num_ues);
+//     //Address
+//     std::vector<std::string> addr_recv_ports_ue_tx(num_ues);
+//     std::vector<std::string> addr_send_ports_ue_rx(num_ues);
 
 
-    for(int i = 0; i < num_ues; i++){
-        addr_send_ports_ue_rx[i] = "tcp://*:" + std::to_string(ues[i].get_rx_port());
-        addr_recv_ports_ue_tx[i] = "tcp://localhost:" + std::to_string(ues[i].get_tx_port());
-    }
+//     for(int i = 0; i < num_ues; i++){
+//         addr_send_ports_ue_rx[i] = "tcp://*:" + std::to_string(ues[i].get_rx_port());
+//         addr_recv_ports_ue_tx[i] = "tcp://localhost:" + std::to_string(ues[i].get_tx_port());
+//     }
 
-    // Initialize ZMQ
-    void *context = zmq_ctx_new ();
+//     // Initialize ZMQ
+//     void *context = zmq_ctx_new ();
 
-    void *req_socket_from_gnb_tx = zmq_socket(context, ZMQ_REQ);
+//     void *req_socket_from_gnb_tx = zmq_socket(context, ZMQ_REQ);
 
-    std::vector<void*> req_sockets_from_ue_tx(num_ues);
+//     std::vector<void*> req_sockets_from_ue_tx(num_ues);
 
-    for(int i = 0; i < num_ues; ++i){
-        req_sockets_from_ue_tx[i] = zmq_socket(context, ZMQ_REQ);
-    }
+//     for(int i = 0; i < num_ues; ++i){
+//         req_sockets_from_ue_tx[i] = zmq_socket(context, ZMQ_REQ);
+//     }
 
-    if(zmq_connect(req_socket_from_gnb_tx, addr_recv_port_gnb_tx.c_str())){
-        perror("zmq_connect\n");
-        return;
-    } else {
-        printf("zmq_connect [req_socket_for_gnb_tx] - success\n");
-    }
+//     if(zmq_connect(req_socket_from_gnb_tx, addr_recv_port_gnb_tx.c_str())){
+//         perror("zmq_connect\n");
+//         return;
+//     } else {
+//         printf("zmq_connect [req_socket_for_gnb_tx] - success\n");
+//     }
 
-    for(int i = 0; i < num_ues; ++i){
-        if(zmq_connect(req_sockets_from_ue_tx[i], addr_recv_ports_ue_tx[i].c_str())){
-            perror("zmq_connect\n");
-            return;
-        } else {
-            printf("zmq_connect [req_socket_for_UE%d_tx] - success\n", i+1);
-        }   
-    }
+//     for(int i = 0; i < num_ues; ++i){
+//         if(zmq_connect(req_sockets_from_ue_tx[i], addr_recv_ports_ue_tx[i].c_str())){
+//             perror("zmq_connect\n");
+//             return;
+//         } else {
+//             printf("zmq_connect [req_socket_for_UE%d_tx] - success\n", i+1);
+//         }   
+//     }
 
-    void *send_socket_for_gnb_rx = zmq_socket(context, ZMQ_REP);
+//     void *send_socket_for_gnb_rx = zmq_socket(context, ZMQ_REP);
 
-    std::vector<void*>send_sockets_for_ue_rx(num_ues);
+//     std::vector<void*>send_sockets_for_ue_rx(num_ues);
 
-    for(int i = 0; i < num_ues; ++i){
-        send_sockets_for_ue_rx[i] = zmq_socket(context, ZMQ_REP);
-    }
+//     for(int i = 0; i < num_ues; ++i){
+//         send_sockets_for_ue_rx[i] = zmq_socket(context, ZMQ_REP);
+//     }
 
-    if(zmq_bind(send_socket_for_gnb_rx, addr_send_port_gnb_rx.c_str())) {
-        perror("zmq_bind\n");
-        return;
-    } else {
-        printf("zmq_bind [send_socket_for_gnb_rx]- success\n");
-    }
+//     if(zmq_bind(send_socket_for_gnb_rx, addr_send_port_gnb_rx.c_str())) {
+//         perror("zmq_bind\n");
+//         return;
+//     } else {
+//         printf("zmq_bind [send_socket_for_gnb_rx]- success\n");
+//     }
 
-    for(int i = 0; i < num_ues; ++i){
-        if(zmq_bind(send_sockets_for_ue_rx[i], addr_send_ports_ue_rx[i].c_str())){
-            perror("zmq_connect\n");
-            return;
-        } else {
-            printf("zmq_connect [req_socket_for_UE%d_rx] - success\n", i+1);
-        }   
-    }
+//     for(int i = 0; i < num_ues; ++i){
+//         if(zmq_bind(send_sockets_for_ue_rx[i], addr_send_ports_ue_rx[i].c_str())){
+//             perror("zmq_connect\n");
+//             return;
+//         } else {
+//             printf("zmq_connect [req_socket_for_UE%d_rx] - success\n", i+1);
+//         }   
+//     }
 
-    //socket to matlab
+//     //socket to matlab
 
-    void *socket_to_matlab;
+//     void *socket_to_matlab;
 
-    if(matlab_enable){
+//     if(matlab_enable){
 
-        socket_to_matlab = zmq_socket (context, ZMQ_STREAM);
+//         socket_to_matlab = zmq_socket (context, ZMQ_STREAM);
     
-        std::string matlab_address = "tcp://*:" + std::to_string(matlab_port);
+//         std::string matlab_address = "tcp://*:" + std::to_string(matlab_port);
     
-        if(zmq_bind(socket_to_matlab, matlab_address.data())){
-            perror("zmq_bind");
-            return;
-        } else {
-            printf("zmq_bind [matlab_socket] - success\n");
-        }
-    }
+//         if(zmq_bind(socket_to_matlab, matlab_address.data())){
+//             perror("zmq_bind");
+//             return;
+//         } else {
+//             printf("zmq_bind [matlab_socket] - success\n");
+//         }
+//     }
 
-    int timeout = 25000;
+//     int timeout = 25000;
 
-    zmq_setsockopt(req_socket_from_gnb_tx, ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+//     zmq_setsockopt(req_socket_from_gnb_tx, ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
 
-    for(int i = 0; i < num_ues; ++i){
-        zmq_setsockopt(req_sockets_from_ue_tx[i], ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
-    }
+//     for(int i = 0; i < num_ues; ++i){
+//         zmq_setsockopt(req_sockets_from_ue_tx[i], ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+//     }
 
-    using cf_t = std::complex<float>;
+//     using cf_t = std::complex<float>;
 
-    int N = 80000;
+//     int N = 80000;
 
-    int nbytes = N * sizeof(cf_t);
+//     int nbytes = N * sizeof(cf_t);
 
-    std::vector<cf_t> buffer_vec(N);
-    std::vector<cf_t> concatenate_buffer(N);
+//     std::vector<cf_t> buffer_vec(N);
+//     std::vector<cf_t> concatenate_buffer(N);
 
-    char buffer_acc[10];
-    int broker_rcv_accept_ues[num_ues] = {0};
-    int broker_rcv_accept_gnbs[num_gnbs] = {0};
+//     char buffer_acc[10];
+//     int broker_rcv_accept_ues[num_ues] = {0};
+//     int broker_rcv_accept_gnbs[num_gnbs] = {0};
 
-    int size;
+//     int size;
 
-    std::vector<uint8_t> concatenate_samples;
+//     std::vector<uint8_t> concatenate_samples;
 
-    std::vector<uint8_t> byte_packet_size;
+//     std::vector<uint8_t> byte_packet_size;
 
-    bool matlab_connected = false;
+//     bool matlab_connected = false;
 
-    std::vector<uint8_t> matlab_buffer(buffer_vec.size() * sizeof(cf_t) + 1);
+//     std::vector<uint8_t> matlab_buffer(buffer_vec.size() * sizeof(cf_t) + 1);
 
-    std::vector<int> packet_sizes;
+//     std::vector<int> packet_sizes;
 
-    zmq_msg_t id_msg;
+//     zmq_msg_t id_msg;
 
-    size_t id_size;
-    char *id_data;
+//     size_t id_size;
+//     char *id_data;
 
 
-    while(1){
+//     while(1){
 
-        //check matlab conection if he is enable
+//         //check matlab conection if he is enable
 
-        if(!matlab_connected && matlab_enable){
+//         if(!matlab_connected && matlab_enable){
 
-            zmq_msg_init(&id_msg);
-            zmq_msg_recv(&id_msg, socket_to_matlab, 0);
+//             zmq_msg_init(&id_msg);
+//             zmq_msg_recv(&id_msg, socket_to_matlab, 0);
     
-            id_size = zmq_msg_size(&id_msg);
-            id_data = new char[id_size];
+//             id_size = zmq_msg_size(&id_msg);
+//             id_data = new char[id_size];
     
-            memcpy(id_data, zmq_msg_data(&id_msg), id_size);
+//             memcpy(id_data, zmq_msg_data(&id_msg), id_size);
     
-            if(id_size > 0){
-                printf("\nMatlab connected successfully\n");
-                matlab_connected = true;
-            } 
+//             if(id_size > 0){
+//                 printf("\nMatlab connected successfully\n");
+//                 matlab_connected = true;
+//             } 
             
-            else{
-                continue;
-            }
+//             else{
+//                 continue;
+//             }
     
-            zmq_msg_close(&id_msg);
-        }
+//             zmq_msg_close(&id_msg);
+//         }
 
-        //receive conn accept from RX's
+//         //receive conn accept from RX's
 
-        memset(buffer_acc, 0, sizeof(buffer_acc));
+//         memset(buffer_acc, 0, sizeof(buffer_acc));
 
-        size = zmq_recv(send_socket_for_gnb_rx, buffer_acc, sizeof(buffer_acc), 0);
+//         size = zmq_recv(send_socket_for_gnb_rx, buffer_acc, sizeof(buffer_acc), 0);
 
-        if(size == -1){
+//         if(size == -1){
 
-            printf("!!!!!!!!!!!   -----1 send_socket_for_gnb_rx\n");
+//             printf("!!!!!!!!!!!   -----1 send_socket_for_gnb_rx\n");
 
-            printf(zmq_strerror(zmq_errno()));
+//             printf(zmq_strerror(zmq_errno()));
 
-            continue;
+//             continue;
 
-        } else{
+//         } else{
 
-            broker_rcv_accept_gnbs[0] = 1;
+//             broker_rcv_accept_gnbs[0] = 1;
 
-            printf("broker received [buffer_acc] form GNB RX = %d\n", size);
-        }
+//             printf("broker received [buffer_acc] form GNB RX = %d\n", size);
+//         }
 
-        for(int i = 0; i < num_ues; ++i){
+//         for(int i = 0; i < num_ues; ++i){
 
-            memset(buffer_acc, 0, sizeof(buffer_acc));
+//             memset(buffer_acc, 0, sizeof(buffer_acc));
 
-            size = zmq_recv(send_sockets_for_ue_rx[i], buffer_acc, sizeof(buffer_acc), 0);
+//             size = zmq_recv(send_sockets_for_ue_rx[i], buffer_acc, sizeof(buffer_acc), 0);
 
-            if(size == -1){
+//             if(size == -1){
 
-                printf("!!!!!!!!!!!   -----1 send_socket_for_ue_%d_rx\n", i+1);
+//                 printf("!!!!!!!!!!!   -----1 send_socket_for_ue_%d_rx\n", i+1);
 
-                continue;
+//                 continue;
 
-            } else{
-                broker_rcv_accept_ues[i] = 1;
+//             } else{
+//                 broker_rcv_accept_ues[i] = 1;
 
-                printf("broker received [buffer_acc] from UE[%d] RX = %d\n", i+1, size);
-            }
-        }
+//                 printf("broker received [buffer_acc] from UE[%d] RX = %d\n", i+1, size);
+//             }
+//         }
     
 
-        int summ = 0;
+//         int summ = 0;
 
-        for (int i = 0; i < num_ues; i++){
-            summ += broker_rcv_accept_ues[i];
-        }
+//         for (int i = 0; i < num_ues; i++){
+//             summ += broker_rcv_accept_ues[i];
+//         }
 
-        printf("Accept UES: %d\n", summ);
+//         printf("Accept UES: %d\n", summ);
 
-        if (summ == num_ues && broker_rcv_accept_gnbs[0] == num_gnbs)
-        {
-            int send = 0;
+//         if (summ == num_ues && broker_rcv_accept_gnbs[0] == num_gnbs)
+//         {
+//             int send = 0;
 
-            // send accepts to TX's
-            send = zmq_send(req_socket_from_gnb_tx, buffer_acc, size, 0);
+//             // send accepts to TX's
+//             send = zmq_send(req_socket_from_gnb_tx, buffer_acc, size, 0);
 
-            printf("req_socket_from_gnb_tx [send] = %d\n", send);
+//             printf("req_socket_from_gnb_tx [send] = %d\n", send);
 
-            for(int i = 0; i < num_ues; ++i){
-                send = zmq_send(req_sockets_from_ue_tx[i], buffer_acc, size, 0);
-                printf("req_socket_from_ue_%d_tx [send] = %d\n", i+1 ,send);
-            }
+//             for(int i = 0; i < num_ues; ++i){
+//                 send = zmq_send(req_sockets_from_ue_tx[i], buffer_acc, size, 0);
+//                 printf("req_socket_from_ue_%d_tx [send] = %d\n", i+1 ,send);
+//             }
 
 
-            // start data transmissiona
+//             // start data transmissiona
 
-            fill(buffer_vec.begin(), buffer_vec.end(), 0);
+//             fill(buffer_vec.begin(), buffer_vec.end(), 0);
 
-            //recv from gnb
-            size = zmq_recv(req_socket_from_gnb_tx, (void*)buffer_vec.data(), nbytes, 0);
+//             //recv from gnb
+//             size = zmq_recv(req_socket_from_gnb_tx, (void*)buffer_vec.data(), nbytes, 0);
 
-            if (size == -1){
-                printf("ERROR: broker received from gNb = %d bytes\n", size);
-                continue;
-            }
+//             if (size == -1){
+//                 printf("ERROR: broker received from gNb = %d bytes\n", size);
+//                 continue;
+//             }
 
-            gnbs[0].set_samples_tx(buffer_vec, size);
+//             gnbs[0].set_samples_tx(buffer_vec, size);
 
-            printf("broker received from gNb %d bytes\n", size);
+//             printf("broker received from gNb %d bytes\n", size);
 
-            printf("\nsamples from gnb\n");
+//             printf("\nsamples from gnb\n");
             
-            //check first 100 samples
-            for(int j = 0; j < 100; ++j){
-                std::cout << gnbs[0].get_samples_tx()[j] << ", ";
-            }
+//             //check first 100 samples
+//             for(int j = 0; j < 100; ++j){
+//                 std::cout << gnbs[0].get_samples_tx()[j] << ", ";
+//             }
 
-            printf("\n");
+//             printf("\n");
 
-            //recieve samples from ues
-            for(int i = 0; i < num_ues; ++i){
+//             //recieve samples from ues
+//             for(int i = 0; i < num_ues; ++i){
 
-                fill(buffer_vec.begin(), buffer_vec.end(), 0);
+//                 fill(buffer_vec.begin(), buffer_vec.end(), 0);
 
-                size = zmq_recv(req_sockets_from_ue_tx[i], (void*)buffer_vec.data(), nbytes, 0);
+//                 size = zmq_recv(req_sockets_from_ue_tx[i], (void*)buffer_vec.data(), nbytes, 0);
 
-                if (size == -1){
-                    printf("ERROR: Broker recieved from UE%d %d bytes\n", i + 1, size);
-                    continue;
-                }
+//                 if (size == -1){
+//                     printf("ERROR: Broker recieved from UE%d %d bytes\n", i + 1, size);
+//                     continue;
+//                 }
 
-                ues[i].set_samples_tx(buffer_vec, size);
+//                 ues[i].set_samples_tx(buffer_vec, size);
 
-                printf("\nbroker [received data] from UE[%d] %d size packet\n", i+1 ,size);
-            }
+//                 printf("\nbroker [received data] from UE[%d] %d size packet\n", i+1 ,size);
+//             }
 
-            //send to MATLAB packet sizes
+//             //send to MATLAB packet sizes
 
-            packet_sizes = get_tx_samples_sizes();
+//             packet_sizes = get_tx_samples_sizes();
 
-            for(int el : packet_sizes){
-                printf("%d ", el);
-            }
+//             for(int el : packet_sizes){
+//                 printf("%d ", el);
+//             }
 
-            byte_packet_size = to_byte(packet_sizes);
+//             byte_packet_size = to_byte(packet_sizes);
 
-            size = send_to_matlab(socket_to_matlab, byte_packet_size, byte_packet_size.size(), id_data, id_size);
+//             size = send_to_matlab(socket_to_matlab, byte_packet_size, byte_packet_size.size(), id_data, id_size);
 
-            printf("\nsocket to matlab [send data] (packet size) = %d\n", size);
+//             printf("\nsocket to matlab [send data] (packet size) = %d\n", size);
 
-            //concatenate ues and gnb samples
+//             //concatenate ues and gnb samples
 
-            concatenate_samples = concatenate_tx_samples();
+//             concatenate_samples = concatenate_tx_samples();
 
-            printf("concatenate samples size = %ld", concatenate_samples.size());
+//             printf("concatenate samples size = %ld", concatenate_samples.size());
 
-            // //send all samples to MATLAB
+//             // //send all samples to MATLAB
 
-            size = send_to_matlab(socket_to_matlab, concatenate_samples, concatenate_samples.size(), id_data, id_size);
+//             size = send_to_matlab(socket_to_matlab, concatenate_samples, concatenate_samples.size(), id_data, id_size);
 
-            printf("\nsocket to matlab [send data] = %d\n", size);
+//             printf("\nsocket to matlab [send data] = %d\n", size);
 
-            // //receive all samples from matlab
+//             // //receive all samples from matlab
 
-            matlab_buffer.resize(size);
+//             matlab_buffer.resize(size);
 
-            size = receive_from_matlab(socket_to_matlab, matlab_buffer, size);
+//             size = receive_from_matlab(socket_to_matlab, matlab_buffer, size);
 
-            printf("\nbroker [received data] from MATLAB = %d\n", size);
+//             printf("\nbroker [received data] from MATLAB = %d\n", size);
 
-            // //deconcatenate samples from MATLAB
+//             // //deconcatenate samples from MATLAB
 
-            std::vector<std::vector<cf_t>> deconcatenate_samples = deconcatenate_all_samples(matlab_buffer, packet_sizes);
+//             std::vector<std::vector<cf_t>> deconcatenate_samples = deconcatenate_all_samples(matlab_buffer, packet_sizes);
 
-            // //send data to ues
+//             // //send data to ues
 
-            for(int i = 0; i < num_ues; ++i){
-                send = zmq_send(send_sockets_for_ue_rx[i], deconcatenate_samples[0].data(), packet_sizes[0], 0);
+//             for(int i = 0; i < num_ues; ++i){
+//                 send = zmq_send(send_sockets_for_ue_rx[i], deconcatenate_samples[0].data(), packet_sizes[0], 0);
 
-                if(send == -1){
-                    printf("ERROR: Cannot transmit data to UE%d", i + 1);
-                    continue;
-                }
+//                 if(send == -1){
+//                     printf("ERROR: Cannot transmit data to UE%d", i + 1);
+//                     continue;
+//                 }
 
-                ues[i].set_samples_rx(deconcatenate_samples[0], send);
-                printf("send_socket_for_ue_%d_rx [send data] = %d\n", i + 1 ,send);
-            }
+//                 ues[i].set_samples_rx(deconcatenate_samples[0], send);
+//                 printf("send_socket_for_ue_%d_rx [send data] = %d\n", i + 1 ,send);
+//             }
 
-            // //concatenate ues sameples
+//             // //concatenate ues sameples
 
-            int max_size = -1;
+//             int max_size = -1;
 
-            //find largest packet
-            for(int i = 1; i < packet_sizes.size(); ++i){
-                if(packet_sizes[i] > max_size){
-                    max_size = packet_sizes[i];
-                }
-            }
+//             //find largest packet
+//             for(int i = 1; i < packet_sizes.size(); ++i){
+//                 if(packet_sizes[i] > max_size){
+//                     max_size = packet_sizes[i];
+//                 }
+//             }
 
-            printf("max ues packet size: %d\n", max_size);
+//             printf("max ues packet size: %d\n", max_size);
 
-            concatenate_buffer.clear();
+//             concatenate_buffer.clear();
 
-            concatenate_buffer.resize(max_size / sizeof(cf_t));
+//             concatenate_buffer.resize(max_size / sizeof(cf_t));
 
-            for(int i = num_gnbs; i < num_gnbs + num_ues; ++i){
-                transform(concatenate_buffer.begin(), concatenate_buffer.end(), deconcatenate_samples[i].begin(), concatenate_buffer.begin(), std::plus<std::complex<float>>());
-            }
+//             for(int i = num_gnbs; i < num_gnbs + num_ues; ++i){
+//                 transform(concatenate_buffer.begin(), concatenate_buffer.end(), deconcatenate_samples[i].begin(), concatenate_buffer.begin(), std::plus<std::complex<float>>());
+//             }
 
-            // //send data to gnb
+//             // //send data to gnb
 
-            send = zmq_send(send_socket_for_gnb_rx, (void*)concatenate_buffer.data(), max_size, 0);
+//             send = zmq_send(send_socket_for_gnb_rx, (void*)concatenate_buffer.data(), max_size, 0);
 
-            gnbs[0].set_samples_rx(concatenate_buffer, send);
+//             gnbs[0].set_samples_rx(concatenate_buffer, send);
 
-            printf("\nsend_socket_for_gnb_rx [send data] = %d\n", send);
+//             printf("\nsend_socket_for_gnb_rx [send data] = %d\n", send);
             
-        }
+//         }
            
-        else
-        {   
-            continue;
-        }
+//         else
+//         {   
+//             continue;
+//         }
 
-    }
+//     }
 
-}
+// }

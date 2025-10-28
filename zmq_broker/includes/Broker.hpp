@@ -20,7 +20,7 @@ typedef _Complex float cf_t;
 
 
 class Broker{
-    private:
+    public:
     
         std::vector<Equipment> ues;
         std::vector<Equipment> gnbs;
@@ -29,7 +29,10 @@ class Broker{
         void *zmq_context;
         void *matlab_req_socket;
 
-        static int broker_count;
+        bool is_running = true;
+        int broker_acc_count;
+
+        int buff_size = 100000;
 
         //data transmission logic and subfunction
 
@@ -46,9 +49,21 @@ class Broker{
     private:
         void initialize_zmq_sockets();
 
+        // Connection requests and accepts
+        bool recv_conn_accepts();
+        bool send_conn_accepts();
+
+        // Samples transmission
+        bool recv_samples_from_gNb();
+        bool send_samples_to_gnb();
+        bool send_samples_to_all_ues();
+        bool recv_samples_from_ues();
+
+        void run_the_world();
+
     public:
         Broker(std::vector<UserEquipment>& _ues, std::vector<gNodeB>& _gnbs, int _matlab_port = -1);
-        Broker(std::string &config_file);
+        Broker(std::string &config_file, std::vector<Equipment>& _ues, std::vector<Equipment>& _gnbs);
         Broker();
 
         //getters
