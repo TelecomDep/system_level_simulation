@@ -12,7 +12,6 @@ class Equipment {
         int N = 100000;
         
         std::vector<std::complex<float>> samples_rx;
-        std::vector<std::complex<float>> samples_tx;
         std::vector<std::complex<float>> samples_to_transmit;
 
         // client on our side  - server on the srsRAN side

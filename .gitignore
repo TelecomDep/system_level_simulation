@@ -6,5 +6,6 @@
 /libzmq
 /czmq
 /jeromq
+/logs/*log
 *.out
 *.txt

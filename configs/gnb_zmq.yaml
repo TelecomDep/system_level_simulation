@@ -48,7 +48,7 @@ cell_cfg:
     mcs_table: qam64                # Sets PUSCH MCS to 64 QAM
     
 log:
-  filename: /tmp/gnb.log            # Path of the log file.
+  filename: logs/gnb.log            # Path of the log file.
   all_level: debug                   # Logging level applied to all layers.
   hex_max_size: 0
 
