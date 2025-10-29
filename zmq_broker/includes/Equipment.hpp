@@ -9,7 +9,7 @@ class Equipment {
         int type;
         int rx_port;
         int tx_port;
-        int N = 20000;
+        int N = 100000;
         
         std::vector<std::complex<float>> samples_rx;
         std::vector<std::complex<float>> samples_to_transmit;

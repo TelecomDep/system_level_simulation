@@ -3,6 +3,8 @@
 #include <string>
 #include <cstring>
 #include <algorithm>
+#include <complex>
+#include <vector>
 #include <zmq.h>
 
 #include "gNB.hpp"
@@ -34,8 +36,10 @@ class Broker{
         bool is_running = true;
         int broker_acc_count;
 
-        int buff_size = 1000000;
+        int buff_size = 100000;
         int nbytes_form_gnb = 0;
+
+        std::vector<std::complex<float>> concatenate_to_gnb_samples;
 
         //data transmission logic and subfunction
 
@@ -45,8 +49,6 @@ class Broker{
 
         template <typename T>
         std::vector<uint8_t> to_byte(std::vector<T> data);
-
-        std::vector<uint8_t> concatenate_tx_samples();
         std::vector<std::vector<std::complex<float>>> deconcatenate_all_samples(std::vector<uint8_t> &all_samples, std::vector<int> packet_sizes);
 
     private:

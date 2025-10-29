@@ -40,7 +40,6 @@ int main(){
     int size = zmq_recv(matlab_server_req_socket, (void *)buffer_vec.data(), nbytes, 0);
 
     for (int i = 0; i < N; i++){
-        buffer_vec[i] = i;
         std::cout << "vect = " << buffer_vec[i] << std::endl;
     }
     return 0;

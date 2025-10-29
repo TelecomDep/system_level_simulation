@@ -38,8 +38,6 @@ int main(){
     std::vector<Equipment> ues;
     std::vector<Equipment> gnbs;
 
-    ues.push_back(Equipment(2110, 2111, 1, 1));
-    gnbs.push_back(Equipment(2001, 2000, 1, 0));
 
     Broker broker = Broker(config_file_path, ues, gnbs);
 

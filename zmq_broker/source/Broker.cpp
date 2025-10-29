@@ -7,23 +7,26 @@ using json = nlohmann::json;
 
 Broker::Broker(std::string &config_file, std::vector<Equipment>& _ues, std::vector<Equipment>& _gnbs)
 {
-    // std::ifstream f(config_file);
-    // json data = json::parse(f);
+    std::ifstream f(config_file);
+    json data = json::parse(f);
     ues = _ues;
     gnbs = _gnbs;
+    concatenate_to_gnb_samples = std::vector<std::complex<float>>(buff_size);
 
-    // for (const auto& item : data["ues"])
-    // {
-    //     ues.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
-    // }
+    for (const auto& item : data["ues"])
+    {
+        ues.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
+    }
 
-    // for (const auto& item : data["gnbs"])
-    // {
-    //     gnbs.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
-    // }
+    for (const auto& item : data["gnbs"])
+    {
+        gnbs.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
+    }
+    
+    
 
-    // matlab_port = data["matlab"]["server_port"];
-    // std::cout << "matlab port = " << matlab_port << std::endl;
+    matlab_port = data["matlab"]["server_port"];
+    std::cout << "matlab port = " << matlab_port << std::endl;
 }
 
 Broker::Broker(){};
@@ -305,6 +308,11 @@ bool Broker::recv_samples_from_ues()
 bool Broker::send_samples_to_gnb()
 {
     // TODO: добавить передачу сэмплов, полученных с матлаба
+
+    for (int i = 0; i < ues.size();i++)
+    {
+        // TODO: либо concatenate
+    }
     gnbs[0].send_samples_to_rx(ues[0].get_samples_tx(), ues[0].get_nbytes_recv_from_tx());
     return true;
 }
