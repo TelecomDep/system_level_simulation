@@ -25,7 +25,7 @@ add_executable(broker
     zmq_broker/source/subfuncs.cpp
 )
 
-add_executable(matlab_zma_test
+add_executable(matlab_zmq_test
     zmq_broker/tests/matlab_zmq.cpp
 )
 
@@ -36,4 +36,4 @@ target_link_libraries(broker zmq pthread boost_program_options)
 target_link_libraries(broker nlohmann_json::nlohmann_json)
 target_include_directories(broker PRIVATE includes)
 
-target_link_libraries(matlab_zma_test zmq pthread boost_program_options) 
+target_link_libraries(matlab_zmq_test zmq pthread boost_program_options) 
