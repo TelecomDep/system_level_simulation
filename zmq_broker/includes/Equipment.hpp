@@ -9,7 +9,7 @@ class Equipment {
         int type;
         int rx_port;
         int tx_port;
-        int N = 100000;
+        int N = 20000;
         
         std::vector<std::complex<float>> samples_rx;
         std::vector<std::complex<float>> samples_to_transmit;
@@ -24,7 +24,7 @@ class Equipment {
         int is_send_conn_req_to_tx = 0;
         char buffer_recv_conn_req[10];
         char buffer_send_conn_req[10];
-        int curr_pack_size = 0;
+        int curr_recv_from_tx_pack_size = 0;
 
     public:
         Equipment(int port_rx, int port_tx, int id, int type);
@@ -34,8 +34,10 @@ class Equipment {
         void recv_conn_accept();
         void send_conn_accept();
 
-        void recv_samples_from_tx(int buff_size);
+        int recv_samples_from_tx(int buff_size);
         void send_samples_to_rx(std::vector<std::complex<float>>& samples, int buff_size);
+
+        int get_nbytes_recv_from_tx();
 
     public:
         int is_ready_to_send();

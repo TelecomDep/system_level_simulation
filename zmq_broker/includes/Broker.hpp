@@ -24,6 +24,8 @@ class Broker{
     
         std::vector<Equipment> ues;
         std::vector<Equipment> gnbs;
+
+        bool is_matlab_connected;
         int matlab_port;
 
         void *zmq_context;
@@ -33,6 +35,7 @@ class Broker{
         int broker_acc_count;
 
         int buff_size = 100000;
+        int nbytes_form_gnb = 0;
 
         //data transmission logic and subfunction
 

@@ -219,15 +219,18 @@ void Broker::initialize_zmq_sockets()
 {
     zmq_context = zmq_ctx_new();
 
-    // std::string matlab_server = "tcp://localhost:" + std::to_string(matlab_port);
-    // matlab_req_socket = zmq_socket (zmq_context, ZMQ_REQ);
-    // int ret = zmq_connect(matlab_req_socket, matlab_server.c_str());
-    // if(ret < 0){
-    //     printf("Failed to connect to Matlab\n");
-    //     exit(1);
-    // } else {
-    //     printf("CONNECTED to Matlab\n");
-    // }
+    std::string matlab_server = "tcp://localhost:" + std::to_string(matlab_port);
+    matlab_req_socket = zmq_socket (zmq_context, ZMQ_REQ);
+    int ret = zmq_connect(matlab_req_socket, matlab_server.c_str());
+    if(ret < 0){
+        printf("Failed to connect to Matlab\n");
+        is_matlab_connected = false;
+    }
+    else
+    {
+        is_matlab_connected = true;
+        printf("CONNECTED to Matlab\n");
+    }
 
     gnbs[0].initialize_sockets(zmq_context);
     ues[0].initialize_sockets(zmq_context);
@@ -279,37 +282,41 @@ bool Broker::send_conn_accepts()
 
 bool Broker::recv_samples_from_gNb()
 {
-    for (auto gnb : gnbs)
-    {
-        gnb.recv_samples_from_tx(buff_size);
-    }
+    // for (auto gnb : gnbs)
+    // {
+    //     gnb.recv_samples_from_tx(buff_size);
+    // }
+    nbytes_form_gnb = gnbs[0].recv_samples_from_tx(buff_size);
+    
     return true;
 }
 
 bool Broker::send_samples_to_all_ues()
 {
-    for(auto ue : ues)
+    for(int i = 0; i < ues.size();i++)
     {
-        ue.send_samples_to_rx(gnbs[0].get_samples_tx(), gnbs[0].get_samples_tx().size());
+        ues[i].send_samples_to_rx(gnbs[0].get_samples_tx(), nbytes_form_gnb);
     }
     return true;
 }
 
 bool Broker::recv_samples_from_ues()
 {
-    for(auto ue : ues)
+    for (int i = 0; i < ues.size();i++)
     {
-        ue.recv_samples_from_tx(buff_size);
+        ues[i].recv_samples_from_tx(buff_size);
     }
     return true;
 }
 
 bool Broker::send_samples_to_gnb()
 {
-    for (auto gnb : gnbs)
-    {
-        gnb.send_samples_to_rx(ues[0].get_samples_tx(), gnbs[0].get_samples_tx().size());
-    }
+
+    // for (int i = 0; i < ues.size();i++)
+    // {
+    //     // concatenate
+    // }
+    gnbs[0].send_samples_to_rx(ues[0].get_samples_tx(), ues[0].get_nbytes_recv_from_tx());
     return true;
 }
 
@@ -318,21 +325,25 @@ void Broker::run_the_world()
 {
     
     while(is_running){
-        
+        std::cout << "---------------------------------------" << std::endl;
         if (recv_conn_accepts())
         {
-            //sleep(1);
-            printf("1\n");
+            std::cout << "------------->>send_conn_accepts()" << std::endl;
             send_conn_accepts();
-            printf("12\n");
+
+            std::cout << "------------->>recv_samples_from_gNb()" << std::endl;
             recv_samples_from_gNb();
-            printf("13\n");
+
+            std::cout << "------------->>send_samples_to_all_ues()" << std::endl;
             send_samples_to_all_ues();
-            printf("14\n");
+
+            std::cout << "------------->>recv_samples_from_ues()" << std::endl;
             recv_samples_from_ues();
-            printf("15\n");
+
+            std::cout << "------------->>send_samples_to_gnb()" << std::endl;
             send_samples_to_gnb();
-            printf("16\n");
+            //sleep(10);
+
             // 1.
             // Получить сэмплы от gNb
             // Отправить сэмплы на Matlab

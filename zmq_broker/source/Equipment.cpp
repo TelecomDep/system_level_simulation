@@ -25,9 +25,9 @@ void Equipment::initialize_sockets(void *zmq_context)
         printf("NULL PTR Socket\n");
         exit(1);
     }
-    // int timeout = 25000;
+    int timeout = 25000;
 
-    // zmq_setsockopt(req_for_srsran_tx_socket, ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+    zmq_setsockopt(req_for_srsran_tx_socket, ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
 
     int ret = zmq_connect(req_for_srsran_tx_socket, addr_port_tx.c_str());
     if(ret < 0){
@@ -57,12 +57,12 @@ void Equipment::recv_conn_accept()
     if(rep_for_srsran_rx_socket != nullptr){
         int size = zmq_recv(rep_for_srsran_rx_socket, buffer_recv_conn_req, sizeof(buffer_recv_conn_req), 0);
         if(size == -1){
-            printf("Equipment (id[%d] type[%d]) did not recieved connection Request from RX(client) port[%d]\n", id, type, rx_port);
+            printf("-->> Equipment (id[%d] type[%d]) did not recieved connection Request from RX(client) port[%d]\n", id, type, rx_port);
             is_recv_conn_acc_from_rx = 0;
         } else{
             is_recv_conn_acc_from_rx = 1;
-            curr_pack_size = size;
-            printf("Equipment (id[%d] type[%d]) received [buffer_recv_conn_req] RX(client) port[%d] = %d\n", id, type, rx_port, size);
+            curr_recv_from_tx_pack_size = size;
+            printf("Equipment (id[%d] type[%d]) received [buffer_recv_conn_req] RX(client) port[%d] size [%d]\n", id, type, rx_port, size);
         }
     } else {
         std::cout << "rep_for_srsran_rx_socket = nullptr" << std::endl;
@@ -73,7 +73,7 @@ void Equipment::send_conn_accept()
 {
     //memset(buffer_send_conn_req, 0, sizeof(buffer_send_conn_req));
     if(rep_for_srsran_rx_socket != nullptr){
-        int send = zmq_send(req_for_srsran_tx_socket, buffer_recv_conn_req, sizeof(buffer_recv_conn_req), 0);
+        int send = zmq_send(req_for_srsran_tx_socket, buffer_recv_conn_req, sizeof(buffer_recv_conn_req[0]), 0);
         if(send == -1){
             printf("Equipment (id[%d] type[%d]) did not send connection Request to TX(server) port[%d]\n", id, type,tx_port);
             is_send_conn_req_to_tx = 0;
@@ -86,30 +86,38 @@ void Equipment::send_conn_accept()
     }
 }
 
-void Equipment::recv_samples_from_tx(int buff_size)
+int Equipment::recv_samples_from_tx(int buff_size)
 {
-    int nbytes = samples_to_transmit.size() * sizeof(std::complex<float>)/ 8;
+    int nbytes = samples_to_transmit.size() * sizeof(std::complex<float>);
     std::fill(samples_to_transmit.begin(), samples_to_transmit.end(), 0);
-    printf("buffer for recv data is prepared\n");
-    if(req_for_srsran_tx_socket != nullptr){
+
+    if (req_for_srsran_tx_socket != nullptr)
+    {
         int size = zmq_recv(req_for_srsran_tx_socket,  (void*)samples_to_transmit.data(), nbytes, 0);
         if (size != -1)
         {
-            printf("broker received from gNb =  %d size packet buffer size = %d\n", size, samples_to_transmit.size());
+            printf("Broker received from server id[%d] type[%d] =  packet size [%d]\n",id, type, size);
+            curr_recv_from_tx_pack_size = size;
         } else {
-            printf("recv_samples_from_tx = %d\n", size);
-            curr_pack_size = size;
+            printf("-->> Error receiving samples\n", size);
         }
-    } else {
+    }
+    else
+    {
         std::cout << "req_for_srsran_tx_socket = nullptr" << std::endl;
     }
+    return curr_recv_from_tx_pack_size;
 }
 
 void Equipment::send_samples_to_rx(std::vector<std::complex<float>>& samples, int buff_size)
 {
-    int nbytes = buff_size * sizeof(std::complex<float>)/8;
-    int send = zmq_send(rep_for_srsran_rx_socket, (void*)samples.data(), nbytes, 0);
-    printf("rep_for_srsran_rx_socket [send data] = %d\n", send);
+    //int nbytes = buff_size * sizeof(std::complex<float>)/8;
+    int send = zmq_send(rep_for_srsran_rx_socket, (void*)samples.data(), buff_size, 0);
+    if(send != -1){
+        printf("Send samples client socket: send data[%d], nBytes[%d]\n", send, buff_size);
+    } else {
+        printf("-->> Error receiving samples\n", send);
+    }
 }
 
 int Equipment::is_ready_to_send()
@@ -120,6 +128,11 @@ int Equipment::is_ready_to_send()
 bool Equipment::is_ready_to_recv()
 {
     return is_send_conn_req_to_tx;
+}
+
+int Equipment::get_nbytes_recv_from_tx()
+{
+    return curr_recv_from_tx_pack_size;
 }
 
 //getters
