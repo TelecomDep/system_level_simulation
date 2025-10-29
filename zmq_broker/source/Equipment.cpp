@@ -111,8 +111,8 @@ int Equipment::recv_samples_from_tx(int buff_size)
 
 void Equipment::send_samples_to_rx(std::vector<std::complex<float>>& samples, int buff_size)
 {
-    //int nbytes = buff_size * sizeof(std::complex<float>)/8;
-    int send = zmq_send(rep_for_srsran_rx_socket, (void*)samples.data(), buff_size, 0);
+    int nbytes = buff_size * sizeof(std::complex<float>)/8;
+    int send = zmq_send(rep_for_srsran_rx_socket, (void*)samples.data(), nbytes, 0);
     if(send != -1){
         printf("Send samples client socket: send data[%d], nBytes[%d]\n", send, buff_size);
     } else {

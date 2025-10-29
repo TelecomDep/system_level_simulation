@@ -34,7 +34,7 @@ class Broker{
         bool is_running = true;
         int broker_acc_count;
 
-        int buff_size = 100000;
+        int buff_size = 1000000;
         int nbytes_form_gnb = 0;
 
         //data transmission logic and subfunction

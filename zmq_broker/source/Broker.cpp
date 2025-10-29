@@ -247,15 +247,14 @@ void Broker::initialize_zmq_sockets()
 bool Broker::recv_conn_accepts()
 {
     broker_acc_count = 0;
-    for (auto gnb : gnbs)
+
+    gnbs[0].recv_conn_accept();
+    broker_acc_count += gnbs[0].is_ready_to_send();
+
+    for(int i = 0; i < ues.size();i++)
     {
-        gnb.recv_conn_accept();
-        broker_acc_count += gnb.is_ready_to_send();
-    }
-    for(auto ue : ues)
-    {
-        ue.recv_conn_accept();
-        broker_acc_count += ue.is_ready_to_send();
+        ues[i].recv_conn_accept();
+        broker_acc_count += ues[i].is_ready_to_send();
     }
 
     if(broker_acc_count == gnbs.size() + ues.size()){
@@ -268,26 +267,20 @@ bool Broker::recv_conn_accepts()
 
 bool Broker::send_conn_accepts()
 {
-    for (auto gnb : gnbs)
-    {
-        gnb.send_conn_accept();
-    }
+    gnbs[0].send_conn_accept();
     
-    for(auto ue : ues)
+    for(int i = 0; i < ues.size();i++)
     {
-        ue.send_conn_accept();
+        ues[i].send_conn_accept();
     }
     return true;
 }
 
 bool Broker::recv_samples_from_gNb()
 {
-    // for (auto gnb : gnbs)
-    // {
-    //     gnb.recv_samples_from_tx(buff_size);
-    // }
+    // TODO: Пока работает только с 1 базово станцией
     nbytes_form_gnb = gnbs[0].recv_samples_from_tx(buff_size);
-    
+
     return true;
 }
 
@@ -311,11 +304,7 @@ bool Broker::recv_samples_from_ues()
 
 bool Broker::send_samples_to_gnb()
 {
-
-    // for (int i = 0; i < ues.size();i++)
-    // {
-    //     // concatenate
-    // }
+    // TODO: добавить передачу сэмплов, полученных с матлаба
     gnbs[0].send_samples_to_rx(ues[0].get_samples_tx(), ues[0].get_nbytes_recv_from_tx());
     return true;
 }
@@ -345,19 +334,21 @@ void Broker::run_the_world()
             //sleep(10);
 
             // 1.
-            // Получить сэмплы от gNb
+            // Получить сэмплы от gNb +
             // Отправить сэмплы на Matlab
             // Получить обновленные сэмплы с Matlab для каждого UE
             // Отправить каждому UE свои сэмплы после Matlab'а
 
             // 2. 
-            // Получить от каждого UE сэмплы
+            // Получить от каждого UE сэмплы + 
             // Отправить от каждого UE сэмплы в Matlab
             // Получить из Matlab'а один массив (суммируем сэмплы всех UE (+ канал)) сэмплов
             // Отправить 1 общий массив в сторону gNb
 
             // 3. 
             // Смотрим на результаты
+        } else {
+            continue;
         }
     }
 }
