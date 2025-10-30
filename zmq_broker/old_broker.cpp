@@ -38,7 +38,11 @@ int main(){
     std::vector<Equipment> ues;
     std::vector<Equipment> gnbs;
 
+    ues.push_back(Equipment(2110, 2111, 1, 1));
+    ues.push_back(Equipment(2120, 2121, 2, 1));
+    ues.push_back(Equipment(2130, 2131, 3, 1));
 
+    gnbs.push_back(Equipment(2001, 2000, 1, 0));
     Broker broker = Broker(config_file_path, ues, gnbs);
 
     broker.start_the_proxy();

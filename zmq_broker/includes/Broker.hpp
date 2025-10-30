@@ -38,8 +38,10 @@ class Broker{
 
         int buff_size = 100000;
         int nbytes_form_gnb = 0;
+        int broker_working_counter = 0;
 
         std::vector<std::complex<float>> concatenate_to_gnb_samples;
+        std::vector<std::complex<float>> matlab_samples;
 
         //data transmission logic and subfunction
 
@@ -63,6 +65,10 @@ class Broker{
         bool send_samples_to_gnb();
         bool send_samples_to_all_ues();
         bool recv_samples_from_ues();
+
+        // Matlab
+        void send_recv_samples_from_gNb_to_matlab();
+        void send_recv_samples_from_Ues_to_matlab();
 
         void run_the_world();
 

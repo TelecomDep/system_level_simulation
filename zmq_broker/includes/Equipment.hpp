@@ -25,6 +25,7 @@ class Equipment {
         char buffer_recv_conn_req[10];
         char buffer_send_conn_req[10];
         int curr_recv_from_tx_pack_size = 0;
+        bool is_active = false;
 
     public:
         Equipment(int port_rx, int port_tx, int id, int type);
@@ -38,6 +39,9 @@ class Equipment {
         void send_samples_to_rx(std::vector<std::complex<float>>& samples, int buff_size);
 
         int get_nbytes_recv_from_tx();
+
+        void divide_samples_by_value(float pl);
+        void activate();
 
     public:
         int is_ready_to_send();

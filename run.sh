@@ -23,17 +23,24 @@ start_program() {
 start_program "$CURRENT_DIR/srsRAN_Project/build/apps/gnb/gnb" "$CFG_PATH/gnb_zmq.yaml"
 sleep 0.2
 
-sudo xterm -hold -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue11_zmq.conf"
-sleep 0.2
-sudo ip netns add "ue11"
+# sudo xterm -hold -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue11_zmq.conf"
+# sleep 0.2
+# sudo ip netns add "ue11"
 
+# sudo xterm -hold -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue12_zmq.conf"
+# sleep 0.2
+# sudo ip netns add "ue12"
+
+# sudo xterm -hold -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue13_zmq.conf"
+# sleep 0.2
+# sudo ip netns add "ue13"
 # Start UEs
-# for ue_id in $(seq 11 11); do
-#     sudo xterm -hold -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue${ue_id}_zmq.conf" &
-#     pids+=($!)
-#     sleep 0.2
-#     sudo ip netns add "ue${ue_id}"
-# done
+for ue_id in $(seq 11 13); do
+    sudo xterm -hold -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue${ue_id}_zmq.conf" &
+    pids+=($!)
+    sleep 0.5
+    sudo ip netns add "ue${ue_id}"
+done
 
 # sleep 6
 

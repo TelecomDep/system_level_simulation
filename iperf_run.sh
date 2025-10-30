@@ -10,7 +10,7 @@ start_program() {
 
 sudo  ip  route  add  10.45.0.0/16  via  10.53.1.2
 
-for ue_id in $(seq 11 11); do
+for ue_id in $(seq 11 13); do
     sudo ip netns add "ue${ue_id}"
     sleep 0.2
     sudo ip netns exec "ue${ue_id}" ip route add default via 10.45.1.1 dev tun_srsue

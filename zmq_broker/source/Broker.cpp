@@ -12,18 +12,8 @@ Broker::Broker(std::string &config_file, std::vector<Equipment>& _ues, std::vect
     ues = _ues;
     gnbs = _gnbs;
     concatenate_to_gnb_samples = std::vector<std::complex<float>>(buff_size);
+    matlab_samples = std::vector<std::complex<float>>(buff_size);
 
-    for (const auto& item : data["ues"])
-    {
-        ues.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
-    }
-
-    for (const auto& item : data["gnbs"])
-    {
-        gnbs.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
-    }
-    
-    
 
     matlab_port = data["matlab"]["server_port"];
     std::cout << "matlab port = " << matlab_port << std::endl;
@@ -236,15 +226,12 @@ void Broker::initialize_zmq_sockets()
     }
 
     gnbs[0].initialize_sockets(zmq_context);
-    ues[0].initialize_sockets(zmq_context);
-    // for(auto gnb: gnbs){
-    //     gnb.initialize_sockets(zmq_context);
-    // }
-
-    // for(auto ue : ues){
-    //     ue.initialize_sockets(zmq_context);
-    // }
-
+    gnbs[0].activate();
+    for (int i = 0; i < ues.size(); i++)
+    {
+        ues[i].initialize_sockets(zmq_context);
+        ues[i].activate();
+    }
 }
 
 bool Broker::recv_conn_accepts()
@@ -260,7 +247,7 @@ bool Broker::recv_conn_accepts()
         broker_acc_count += ues[i].is_ready_to_send();
     }
 
-    if(broker_acc_count == gnbs.size() + ues.size()){
+    if(broker_acc_count >= 2){
         return true;
     } else {
         printf("Not all connection Accepts are received\n");
@@ -277,6 +264,23 @@ bool Broker::send_conn_accepts()
         ues[i].send_conn_accept();
     }
     return true;
+}
+
+void Broker::send_recv_samples_from_gNb_to_matlab()
+{
+    int send = zmq_send(matlab_req_socket, (void*)gnbs[0].get_samples_tx().data(), nbytes_form_gnb, 0);
+    if(send != -1){
+        printf("Send samples client socket: send data[%d], nBytes[%d]\n", send, nbytes_form_gnb);
+    } else {
+        printf("-->> Error receiving samples\n", send);
+    }
+
+    
+}
+
+void Broker::send_recv_samples_from_Ues_to_matlab()
+{
+
 }
 
 bool Broker::recv_samples_from_gNb()
@@ -301,27 +305,44 @@ bool Broker::recv_samples_from_ues()
     for (int i = 0; i < ues.size();i++)
     {
         ues[i].recv_samples_from_tx(buff_size);
+        ues[i].divide_samples_by_value((i+1)*10.0f);
     }
+
     return true;
 }
 
 bool Broker::send_samples_to_gnb()
 {
     // TODO: добавить передачу сэмплов, полученных с матлаба
-
-    for (int i = 0; i < ues.size();i++)
-    {
-        // TODO: либо concatenate
-    }
-    gnbs[0].send_samples_to_rx(ues[0].get_samples_tx(), ues[0].get_nbytes_recv_from_tx());
+    // int max_size = 0;
+    // std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
+    // for (int i = 0; i < ues.size(); i++)
+    // {
+    //     // TODO: либо concatenate
+    //     //concatenate_to_gnb_samples
+    //     if(ues[i].is_active){
+    //         if(max_size < ues[i].get_nbytes_recv_from_tx())
+    //         {
+    //             max_size = ues[i].get_nbytes_recv_from_tx();
+    //         }
+    //         std::transform( concatenate_to_gnb_samples.begin(), 
+    //                         concatenate_to_gnb_samples.end(), 
+    //                         ues[i].get_samples_tx().begin(), 
+    //                         concatenate_to_gnb_samples.begin(), 
+    //                         std::plus<std::complex<float>>());
+    //     }
+    // }
+    
+    gnbs[0].send_samples_to_rx(concatenate_to_gnb_samples, nbytes_form_gnb);
     return true;
 }
 
 
 void Broker::run_the_world()
 {
-    
-    while(is_running){
+    broker_working_counter = 0;
+    while (is_running)
+    {
         std::cout << "---------------------------------------" << std::endl;
         if (recv_conn_accepts())
         {
@@ -330,12 +351,14 @@ void Broker::run_the_world()
 
             std::cout << "------------->>recv_samples_from_gNb()" << std::endl;
             recv_samples_from_gNb();
+                send_recv_samples_from_gNb_to_matlab();
 
             std::cout << "------------->>send_samples_to_all_ues()" << std::endl;
             send_samples_to_all_ues();
 
             std::cout << "------------->>recv_samples_from_ues()" << std::endl;
             recv_samples_from_ues();
+                send_recv_samples_from_Ues_to_matlab();
 
             std::cout << "------------->>send_samples_to_gnb()" << std::endl;
             send_samples_to_gnb();
@@ -358,6 +381,7 @@ void Broker::run_the_world()
         } else {
             continue;
         }
+        broker_working_counter++;
     }
 }
 

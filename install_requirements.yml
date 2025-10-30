@@ -33,6 +33,7 @@
           - openjdk-17-jdk
           - libtool
           - maven
+          - iperf3
           # - nlohmann-json3-dev
         state: present
 

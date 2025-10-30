@@ -72,7 +72,7 @@ void Equipment::recv_conn_accept()
 void Equipment::send_conn_accept()
 {
     //memset(buffer_send_conn_req, 0, sizeof(buffer_send_conn_req));
-    if(rep_for_srsran_rx_socket != nullptr){
+    if(rep_for_srsran_rx_socket != nullptr && is_active){
         int send = zmq_send(req_for_srsran_tx_socket, buffer_recv_conn_req, sizeof(buffer_recv_conn_req[0]), 0);
         if(send == -1){
             printf("Equipment (id[%d] type[%d]) did not send connection Request to TX(server) port[%d]\n", id, type,tx_port);
@@ -91,7 +91,7 @@ int Equipment::recv_samples_from_tx(int buff_size)
     int nbytes = samples_to_transmit.size() * sizeof(std::complex<float>);
     std::fill(samples_to_transmit.begin(), samples_to_transmit.end(), 0);
 
-    if (req_for_srsran_tx_socket != nullptr)
+    if (req_for_srsran_tx_socket != nullptr && is_active)
     {
         int size = zmq_recv(req_for_srsran_tx_socket,  (void*)samples_to_transmit.data(), nbytes, 0);
         if (size != -1)
@@ -112,12 +112,32 @@ int Equipment::recv_samples_from_tx(int buff_size)
 void Equipment::send_samples_to_rx(std::vector<std::complex<float>>& samples, int buff_size)
 {
     int nbytes = buff_size * sizeof(std::complex<float>)/8;
-    int send = zmq_send(rep_for_srsran_rx_socket, (void*)samples.data(), nbytes, 0);
-    if(send != -1){
-        printf("Send samples client socket: send data[%d], nBytes[%d]\n", send, buff_size);
-    } else {
-        printf("-->> Error receiving samples\n", send);
+    if(rep_for_srsran_rx_socket != nullptr && is_active){
+        int send = zmq_send(rep_for_srsran_rx_socket, (void*)samples.data(), buff_size, 0);
+        if(send != -1){
+            printf("Send samples client socket: send data[%d], nBytes[%d]\n", send, buff_size);
+        } else {
+            printf("-->> Error receiving samples\n", send);
+        }
     }
+}
+
+void Equipment::divide_samples_by_value(float pl)
+{
+    if(is_active)
+    {
+        for (int i = 0; i < samples_to_transmit.size(); i++){
+            std::complex<float> val_1;
+            val_1 = std::complex<float>(samples_to_transmit[i].real()/pl, samples_to_transmit[i].imag()/pl);
+            samples_to_transmit[i] = val_1;
+        }
+    }
+
+}
+
+void Equipment::activate()
+{
+    is_active = true;
 }
 
 int Equipment::is_ready_to_send()
