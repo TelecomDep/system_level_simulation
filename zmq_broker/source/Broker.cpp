@@ -14,6 +14,17 @@ Broker::Broker(std::string &config_file, std::vector<Equipment>& _ues, std::vect
     concatenate_to_gnb_samples = std::vector<std::complex<float>>(buff_size);
     matlab_samples = std::vector<std::complex<float>>(buff_size);
 
+    // TODO: fix nullptr while auto
+    // for (const auto& item : data["ues"])
+    // {
+    //     ues.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
+    // }
+
+    // for (const auto& item : data["gnbs"])
+    // {
+    //     gnbs.push_back(Equipment(item["rx_port"], item["tx_port"], item["id"], item["type"]));
+    // }
+
 
     matlab_port = data["matlab"]["server_port"];
     std::cout << "matlab port = " << matlab_port << std::endl;

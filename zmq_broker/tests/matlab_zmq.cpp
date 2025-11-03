@@ -33,6 +33,7 @@ int main(){
         buffer_vec[i] = val_1;
         std::cout << "vect = " << buffer_vec[i] << std::endl;
     }
+    buffer_vec[0] = std::complex<float>(100, 20);
 
     std::cout << "recv: " << std::endl;
     // send to matlab
