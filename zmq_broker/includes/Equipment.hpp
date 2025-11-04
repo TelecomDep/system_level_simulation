@@ -43,6 +43,8 @@ class Equipment {
         void divide_samples_by_value(float pl);
         void activate();
 
+        int getId();
+
     public:
         int is_ready_to_send();
         bool is_ready_to_recv();

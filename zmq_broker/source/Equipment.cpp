@@ -140,6 +140,11 @@ void Equipment::activate()
     is_active = true;
 }
 
+int Equipment::getId()
+{
+    return this->id;
+}
+
 int Equipment::is_ready_to_send()
 {
     return is_recv_conn_acc_from_rx;

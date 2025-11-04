@@ -27,7 +27,7 @@ class Broker{
         std::vector<Equipment> ues;
         std::vector<Equipment> gnbs;
 
-        bool is_matlab_connected;
+        bool is_matlab_connected = false;
         int matlab_port;
 
         void *zmq_context;
@@ -65,6 +65,7 @@ class Broker{
         bool send_samples_to_gnb();
         bool send_samples_to_all_ues();
         bool recv_samples_from_ues();
+        bool send_from_gnb_to_matlab_per_ue();
 
         // Matlab
         void send_recv_samples_from_gNb_to_matlab();

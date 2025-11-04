@@ -75,6 +75,40 @@ int Broker::send_to_matlab(void *socket_to_matlab, std::vector<uint8_t> &data, i
     return size;
 }
 
+bool Broker::send_from_gnb_to_matlab_per_ue()
+{
+    int gnb_id = gnbs[0].getId();
+    int ue_id = 0;
+    int N = 10;
+    std::vector<int> buffer_acc(N);
+    std::complex<float> ids;
+    for (int i = 0; i < ues.size(); i++)
+    {
+        ue_id = ues[i].getId();
+        matlab_samples = gnbs[0].get_samples_tx();
+        ids = std::complex<float>(gnb_id, ue_id);
+        matlab_samples.insert(matlab_samples.begin(), ids);
+
+        int send = zmq_send(matlab_req_socket, (void *)gnbs[0].get_samples_tx().data(), nbytes_form_gnb, 0);
+        if(send == -1){
+            printf("Error sending into matlab\n");
+        } else{
+            printf("send to matlab from gNb size packet = %d\n", nbytes_form_gnb);
+        }
+        
+
+        std::fill(buffer_acc.begin(), buffer_acc.end(), 0);
+        int size = zmq_recv(matlab_req_socket, (void *)buffer_acc.data(), N, 0);
+        if(size == -1){
+            printf("Error recv from matlab\n");
+        } else {
+            printf("revc from matlab accept = %d\n", size);
+        }
+    }
+
+    return true;
+}
+
 int Broker::receive_from_matlab(void *socket_to_matlab, std::vector<uint8_t> &data, int target_rcv_data) {
     zmq_msg_t recv_id, recv_data;
     int sum_rcv_data = 0;
@@ -134,74 +168,6 @@ std::vector<uint8_t> Broker::to_byte(std::vector<T> data){
 
     return result;
 }
-
-// std::vector<int> Broker::get_tx_samples_sizes() const{
-//     std::vector<int> result;
-
-//     for(const Equipment& el : gnbs){
-//         result.push_back(el.get_samples_tx().size());
-//     }
-
-//     for(const Equipment& el : ues){
-//         result.push_back(el.get_samples_tx().size());
-//     }
-
-//     return result;
-// }
-
-// std::vector<int> Broker::get_rx_samples_sizes() const{
-//     std::vector<int> result;
-
-//     for(const Equipment& el : ues){
-//         result.push_back(el.get_samples_rx().size());
-//     }
-
-//     return result;
-// }
-
-// //get tx samples from ues and gnbs
-// std::vector<std::vector<std::complex<float>>> Broker::get_all_tx_samples() const{
-
-//     std::vector<std::vector<std::complex<float>>> result;
-    
-//     for(const Equipment& el: gnbs){
-//         result.push_back(el.get_samples_tx());
-//     }
-
-//     for(const Equipment& el: ues){
-//         result.push_back(el.get_samples_tx());
-//     }
-
-//     return result;
-// }
-
-// std::vector<uint8_t> Broker::concatenate_tx_samples(){
-
-//     std::vector<std::vector<std::complex<float>>> all_samples = get_all_tx_samples();
-
-//     int len = 0; //len samples in bytes
-
-//     for(const std::vector<std::complex<float>>& el : all_samples){
-//         len += el.size() + 1;                                           // +1 for ID
-//     }
-
-//     std::vector<uint8_t> result(len);
-
-//     int offset = 0;
-
-//     for(int i = 0; i < all_samples.size(); ++i){
-
-//         result[offset] = static_cast<uint8_t>(i);
-
-//         offset++;
-
-//         memcpy(result.data() + offset, all_samples[i].data(), all_samples[i].size());
-//         offset += all_samples[i].size();
-//     }
-
-//     return result;
-// }
-
 
 std::vector<std::vector<std::complex<float>>> Broker::deconcatenate_all_samples(std::vector<uint8_t> &all_samples, std::vector<int> packet_sizes) {
 
@@ -325,24 +291,24 @@ bool Broker::recv_samples_from_ues()
 bool Broker::send_samples_to_gnb()
 {
     // TODO: добавить передачу сэмплов, полученных с матлаба
-    // int max_size = 0;
-    // std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
-    // for (int i = 0; i < ues.size(); i++)
-    // {
-    //     // TODO: либо concatenate
-    //     //concatenate_to_gnb_samples
-    //     if(ues[i].is_active){
-    //         if(max_size < ues[i].get_nbytes_recv_from_tx())
-    //         {
-    //             max_size = ues[i].get_nbytes_recv_from_tx();
-    //         }
-    //         std::transform( concatenate_to_gnb_samples.begin(), 
-    //                         concatenate_to_gnb_samples.end(), 
-    //                         ues[i].get_samples_tx().begin(), 
-    //                         concatenate_to_gnb_samples.begin(), 
-    //                         std::plus<std::complex<float>>());
-    //     }
-    // }
+    int max_size = 0;
+    std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
+    for (int i = 0; i < ues.size(); i++)
+    {
+        // TODO: либо concatenate
+        //concatenate_to_gnb_samples
+        if(ues[i].is_active){
+            if(max_size < ues[i].get_nbytes_recv_from_tx())
+            {
+                max_size = ues[i].get_nbytes_recv_from_tx();
+            }
+            std::transform( concatenate_to_gnb_samples.begin(), 
+                            concatenate_to_gnb_samples.end(), 
+                            ues[i].get_samples_tx().begin(), 
+                            concatenate_to_gnb_samples.begin(), 
+                            std::plus<std::complex<float>>());
+        }
+    }
     
     gnbs[0].send_samples_to_rx(concatenate_to_gnb_samples, nbytes_form_gnb);
     return true;
@@ -354,43 +320,57 @@ void Broker::run_the_world()
     broker_working_counter = 0;
     while (is_running)
     {
-        std::cout << "---------------------------------------" << std::endl;
-        if (recv_conn_accepts())
-        {
-            std::cout << "------------->>send_conn_accepts()" << std::endl;
-            send_conn_accepts();
+        if(is_matlab_connected){
+            std::cout << "---------------------------------------" << std::endl;
+            if (recv_conn_accepts())
+            {
+                std::cout << "------------->>send_conn_accepts()" << std::endl;
+                send_conn_accepts();
 
-            std::cout << "------------->>recv_samples_from_gNb()" << std::endl;
-            recv_samples_from_gNb();
-                send_recv_samples_from_gNb_to_matlab();
+                std::cout << "------------->>recv_samples_from_gNb()" << std::endl;
+                recv_samples_from_gNb();
+                send_from_gnb_to_matlab_per_ue();
 
-            std::cout << "------------->>send_samples_to_all_ues()" << std::endl;
-            send_samples_to_all_ues();
+                std::cout << "------------->>send_samples_to_all_ues()" << std::endl;
+                send_samples_to_all_ues();
 
-            std::cout << "------------->>recv_samples_from_ues()" << std::endl;
-            recv_samples_from_ues();
-                send_recv_samples_from_Ues_to_matlab();
+                std::cout << "------------->>recv_samples_from_ues()" << std::endl;
+                recv_samples_from_ues();
+                    send_recv_samples_from_Ues_to_matlab();
 
-            std::cout << "------------->>send_samples_to_gnb()" << std::endl;
-            send_samples_to_gnb();
-            //sleep(10);
+                std::cout << "------------->>send_samples_to_gnb()" << std::endl;
+                send_samples_to_gnb();
+                //sleep(10);
 
-            // 1.
-            // Получить сэмплы от gNb +
-            // Отправить сэмплы на Matlab
-            // Получить обновленные сэмплы с Matlab для каждого UE
-            // Отправить каждому UE свои сэмплы после Matlab'а
+                // 1.
+                // Получить сэмплы от gNb +
+                // Отправить сэмплы на Matlab
+                // Получить обновленные сэмплы с Matlab для каждого UE
+                // Отправить каждому UE свои сэмплы после Matlab'а
 
-            // 2. 
-            // Получить от каждого UE сэмплы + 
-            // Отправить от каждого UE сэмплы в Matlab
-            // Получить из Matlab'а один массив (суммируем сэмплы всех UE (+ канал)) сэмплов
-            // Отправить 1 общий массив в сторону gNb
+                // 2. 
+                // Получить от каждого UE сэмплы + 
+                // Отправить от каждого UE сэмплы в Matlab
+                // Получить из Matlab'а один массив (суммируем сэмплы всех UE (+ канал)) сэмплов
+                // Отправить 1 общий массив в сторону gNb
 
-            // 3. 
-            // Смотрим на результаты
+                // 3. 
+                // Смотрим на результаты
+            } else {
+                continue;
+            }
         } else {
-            continue;
+            if (recv_conn_accepts())
+            {
+                send_conn_accepts();
+                recv_samples_from_gNb();
+                send_samples_to_all_ues();
+                recv_samples_from_ues();
+                send_samples_to_gnb();
+            } else {
+                continue;
+            }
+
         }
         broker_working_counter++;
     }
@@ -401,6 +381,73 @@ void Broker::start_the_proxy()
     initialize_zmq_sockets();
     run_the_world();
 }
+
+// std::vector<int> Broker::get_tx_samples_sizes() const{
+//     std::vector<int> result;
+
+//     for(const Equipment& el : gnbs){
+//         result.push_back(el.get_samples_tx().size());
+//     }
+
+//     for(const Equipment& el : ues){
+//         result.push_back(el.get_samples_tx().size());
+//     }
+
+//     return result;
+// }
+
+// std::vector<int> Broker::get_rx_samples_sizes() const{
+//     std::vector<int> result;
+
+//     for(const Equipment& el : ues){
+//         result.push_back(el.get_samples_rx().size());
+//     }
+
+//     return result;
+// }
+
+// //get tx samples from ues and gnbs
+// std::vector<std::vector<std::complex<float>>> Broker::get_all_tx_samples() const{
+
+//     std::vector<std::vector<std::complex<float>>> result;
+    
+//     for(const Equipment& el: gnbs){
+//         result.push_back(el.get_samples_tx());
+//     }
+
+//     for(const Equipment& el: ues){
+//         result.push_back(el.get_samples_tx());
+//     }
+
+//     return result;
+// }
+
+// std::vector<uint8_t> Broker::concatenate_tx_samples(){
+
+//     std::vector<std::vector<std::complex<float>>> all_samples = get_all_tx_samples();
+
+//     int len = 0; //len samples in bytes
+
+//     for(const std::vector<std::complex<float>>& el : all_samples){
+//         len += el.size() + 1;                                           // +1 for ID
+//     }
+
+//     std::vector<uint8_t> result(len);
+
+//     int offset = 0;
+
+//     for(int i = 0; i < all_samples.size(); ++i){
+
+//         result[offset] = static_cast<uint8_t>(i);
+
+//         offset++;
+
+//         memcpy(result.data() + offset, all_samples[i].data(), all_samples[i].size());
+//         offset += all_samples[i].size();
+//     }
+
+//     return result;
+// }
 
 // void Broker::run(){
 
