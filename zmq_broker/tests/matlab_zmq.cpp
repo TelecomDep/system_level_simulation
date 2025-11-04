@@ -33,10 +33,25 @@ int main(){
         buffer_vec[i] = val_1;
         std::cout << "vect = " << buffer_vec[i] << std::endl;
     }
-    buffer_vec[0] = std::complex<float>(100, 20);
 
-    std::cout << "recv: " << std::endl;
-    // send to matlab
+    for (int i = 0; i < 6; i++){
+
+        buffer_vec[0] = std::complex<float>(10*i, 20);
+
+        // send to matlab
+        int send = zmq_send(matlab_server_req_socket, (void*)buffer_vec.data(), nbytes, 0);
+        printf("send to matlab from UE1 %d size packet\n", nbytes);
+
+        std::fill(buffer_vec.begin(), buffer_vec.end(), 0);
+        int size = zmq_recv(matlab_server_req_socket, (void *)buffer_vec.data(), nbytes, 0);
+
+
+        for (int i = 0; i < N; i++){
+            std::cout << "vect = " << buffer_vec[i] << std::endl;
+        }
+    }
+
+    buffer_vec[0] = std::complex<float>(255, 20);
     int send = zmq_send(matlab_server_req_socket, (void*)buffer_vec.data(), nbytes, 0);
     printf("send to matlab from UE1 %d size packet\n", nbytes);
 
@@ -44,7 +59,7 @@ int main(){
     int size = zmq_recv(matlab_server_req_socket, (void *)buffer_vec.data(), nbytes, 0);
 
     for (int i = 0; i < N; i++){
-        std::cout << "vect = " << buffer_vec[i] << std::endl;
+            std::cout << "vect = " << buffer_vec[i] << std::endl;
     }
     return 0;
 }
