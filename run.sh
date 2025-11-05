@@ -13,7 +13,7 @@ NUM_UES=2
 echo $CFG_PATH
 echo $CURRENT_DIR
 start_program() {
-    sudo xterm -hold -e "$1" -c "$2" &
+    sudo xterm -e "$1" -c "$2" &
     pids+=($!)
     sleep 0.2
 }
@@ -36,7 +36,7 @@ sleep 0.2
 # sudo ip netns add "ue13"
 # Start UEs
 for ue_id in $(seq 11 13); do
-    sudo xterm -hold -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue${ue_id}_zmq.conf" &
+    sudo xterm -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue${ue_id}_zmq.conf" &
     pids+=($!)
     sleep 0.5
     sudo ip netns add "ue${ue_id}"

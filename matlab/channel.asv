@@ -1,0 +1,3 @@
+function [out] = divide_by_val(data_complex, equipmentTarget, value)
+    out = data_complex / value;
+end

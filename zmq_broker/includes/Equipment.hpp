@@ -9,7 +9,7 @@ class Equipment {
         int type;
         int rx_port;
         int tx_port;
-        int N = 100000;
+        int N = 300000;
         
         std::vector<std::complex<float>> samples_rx;
         std::vector<std::complex<float>> samples_to_transmit;
@@ -48,6 +48,7 @@ class Equipment {
     public:
         int is_ready_to_send();
         bool is_ready_to_recv();
+        int get_recv_nbytes();
 
         // getters
         int get_rx_port() const;

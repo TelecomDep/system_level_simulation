@@ -75,6 +75,67 @@ int Broker::send_to_matlab(void *socket_to_matlab, std::vector<uint8_t> &data, i
     return size;
 }
 
+bool Broker::send_from_ues_to_matalb_and_send_to_gnb()
+{
+
+    int gnb_id = gnbs[0].getId();
+    int ue_id = 0;
+    int N = 10;
+    std::vector<int> buffer_acc(N);
+    std::complex<float> ids;
+    int max_size = 0;
+    std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
+    for (int i = 0; i < ues.size(); i++)
+    {
+        if(ues[i].is_active){
+            ue_id = ues[i].getId();
+            ids = std::complex<float>((float)ue_id, (float)gnb_id);
+            matlab_samples = ues[i].samples_to_transmit;
+            matlab_samples.insert(matlab_samples.begin(), ids);
+
+            int send = zmq_send(matlab_req_socket, (void *)matlab_samples.data(), ues[i].get_recv_nbytes() + sizeof(std::complex<float>), 0);
+            if(send == -1){
+                printf("Error sending into matlab\n");
+            } else{
+                printf("send to matlab from ues size packet = %d\n", send);
+            }
+            matlab_samples.erase(matlab_samples.begin());
+
+            std::fill(buffer_acc.begin(), buffer_acc.end(), 0);
+            int size = zmq_recv(matlab_req_socket, (void *)buffer_acc.data(), N, 0);
+            if(size == -1){
+                printf("Error recv from matlab\n");
+            } else {
+                printf("revc from matlab accept = %d\n", size);
+            }
+
+
+            if(max_size < ues[i].get_recv_nbytes() - sizeof(std::complex<float>)){
+                max_size = ues[i].get_recv_nbytes();
+                printf("max_size = %d\n", max_size );
+            }
+        }
+    }
+
+    matlab_samples.insert(matlab_samples.begin(), std::complex<float>(255, 255));
+    int send = zmq_send(matlab_req_socket, (void*)matlab_samples.data(), max_size + sizeof(std::complex<float>), 0);
+    printf("send to matlab from UE1 %d size packet\n", max_size + sizeof(std::complex<float>));
+    matlab_samples.erase(matlab_samples.begin());
+
+    concatenate_to_gnb_samples.insert(concatenate_to_gnb_samples.begin(), ids);
+    std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
+    int size = zmq_recv(matlab_req_socket, (void *)concatenate_to_gnb_samples.data(), max_size + sizeof(std::complex<float>), 0);
+    printf("recv from matlab concatenated samples = %d\n", size);
+    concatenate_to_gnb_samples.erase(concatenate_to_gnb_samples.begin());
+
+    gnbs[0].send_samples_to_rx(concatenate_to_gnb_samples, size - sizeof(std::complex<float>));
+
+    
+    std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
+    std::fill(matlab_samples.begin(), matlab_samples.end(), 0);
+    return true;
+}
+
 bool Broker::send_from_gnb_to_matlab_per_ue()
 {
     int gnb_id = gnbs[0].getId();
@@ -85,27 +146,32 @@ bool Broker::send_from_gnb_to_matlab_per_ue()
     for (int i = 0; i < ues.size(); i++)
     {
         ue_id = ues[i].getId();
-        matlab_samples = gnbs[0].get_samples_tx();
-        ids = std::complex<float>(gnb_id, ue_id);
+        std::cout << "gnbid = " << gnb_id << std::endl;
+        matlab_samples = gnbs[0].samples_to_transmit;
+        ids = std::complex<float>((float)gnb_id, (float)ue_id);
         matlab_samples.insert(matlab_samples.begin(), ids);
 
-        int send = zmq_send(matlab_req_socket, (void *)gnbs[0].get_samples_tx().data(), nbytes_form_gnb, 0);
+        int send = zmq_send(matlab_req_socket, (void *)matlab_samples.data(), gnbs[0].get_recv_nbytes() + sizeof(std::complex<float>), 0);
         if(send == -1){
             printf("Error sending into matlab\n");
         } else{
-            printf("send to matlab from gNb size packet = %d\n", nbytes_form_gnb);
+            printf("send to matlab from gNb size packet = %d\n", send);
         }
         
 
-        std::fill(buffer_acc.begin(), buffer_acc.end(), 0);
-        int size = zmq_recv(matlab_req_socket, (void *)buffer_acc.data(), N, 0);
+        std::fill(matlab_samples.begin(), matlab_samples.end(), 0);
+        int size = zmq_recv(matlab_req_socket, (void *)matlab_samples.data(), gnbs[0].get_recv_nbytes() + sizeof(std::complex<float>), 0);
         if(size == -1){
             printf("Error recv from matlab\n");
         } else {
             printf("revc from matlab accept = %d\n", size);
         }
+        matlab_samples.erase(matlab_samples.begin());
+    
+        ues[i].send_samples_to_rx(matlab_samples, gnbs[0].get_recv_nbytes());
+        
     }
-
+    //nbytes_form_gnb = 0;
     return true;
 }
 
@@ -243,18 +309,6 @@ bool Broker::send_conn_accepts()
     return true;
 }
 
-void Broker::send_recv_samples_from_gNb_to_matlab()
-{
-    int send = zmq_send(matlab_req_socket, (void*)gnbs[0].get_samples_tx().data(), nbytes_form_gnb, 0);
-    if(send != -1){
-        printf("Send samples client socket: send data[%d], nBytes[%d]\n", send, nbytes_form_gnb);
-    } else {
-        printf("-->> Error receiving samples\n", send);
-    }
-
-    
-}
-
 void Broker::send_recv_samples_from_Ues_to_matlab()
 {
 
@@ -282,7 +336,6 @@ bool Broker::recv_samples_from_ues()
     for (int i = 0; i < ues.size();i++)
     {
         ues[i].recv_samples_from_tx(buff_size);
-        ues[i].divide_samples_by_value((i+1)*10.0f);
     }
 
     return true;
@@ -295,8 +348,10 @@ bool Broker::send_samples_to_gnb()
     std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
     for (int i = 0; i < ues.size(); i++)
     {
+        ues[i].divide_samples_by_value((i+1)*10.0f); // path losses
         // TODO: либо concatenate
         //concatenate_to_gnb_samples
+        
         if(ues[i].is_active){
             if(max_size < ues[i].get_nbytes_recv_from_tx())
             {
@@ -331,31 +386,10 @@ void Broker::run_the_world()
                 recv_samples_from_gNb();
                 send_from_gnb_to_matlab_per_ue();
 
-                std::cout << "------------->>send_samples_to_all_ues()" << std::endl;
-                send_samples_to_all_ues();
-
                 std::cout << "------------->>recv_samples_from_ues()" << std::endl;
                 recv_samples_from_ues();
-                    send_recv_samples_from_Ues_to_matlab();
 
-                std::cout << "------------->>send_samples_to_gnb()" << std::endl;
-                send_samples_to_gnb();
-                //sleep(10);
-
-                // 1.
-                // Получить сэмплы от gNb +
-                // Отправить сэмплы на Matlab
-                // Получить обновленные сэмплы с Matlab для каждого UE
-                // Отправить каждому UE свои сэмплы после Matlab'а
-
-                // 2. 
-                // Получить от каждого UE сэмплы + 
-                // Отправить от каждого UE сэмплы в Matlab
-                // Получить из Matlab'а один массив (суммируем сэмплы всех UE (+ канал)) сэмплов
-                // Отправить 1 общий массив в сторону gNb
-
-                // 3. 
-                // Смотрим на результаты
+                send_from_ues_to_matalb_and_send_to_gnb();
             } else {
                 continue;
             }

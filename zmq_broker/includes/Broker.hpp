@@ -36,7 +36,7 @@ class Broker{
         bool is_running = true;
         int broker_acc_count;
 
-        int buff_size = 100000;
+        int buff_size = 300000;
         int nbytes_form_gnb = 0;
         int broker_working_counter = 0;
 
@@ -65,10 +65,11 @@ class Broker{
         bool send_samples_to_gnb();
         bool send_samples_to_all_ues();
         bool recv_samples_from_ues();
-        bool send_from_gnb_to_matlab_per_ue();
+        
 
         // Matlab
-        void send_recv_samples_from_gNb_to_matlab();
+        bool send_from_gnb_to_matlab_per_ue();
+        bool send_from_ues_to_matalb_and_send_to_gnb();
         void send_recv_samples_from_Ues_to_matlab();
 
         void run_the_world();

@@ -109,6 +109,11 @@ int Equipment::recv_samples_from_tx(int buff_size)
     return curr_recv_from_tx_pack_size;
 }
 
+int Equipment::get_recv_nbytes()
+{
+    return this->curr_recv_from_tx_pack_size;
+}
+
 void Equipment::send_samples_to_rx(std::vector<std::complex<float>>& samples, int buff_size)
 {
     int nbytes = buff_size * sizeof(std::complex<float>)/8;
