@@ -123,7 +123,7 @@ bool Broker::send_from_ues_to_matalb_and_send_to_gnb()
     matlab_samples.erase(matlab_samples.begin());
 
     concatenate_to_gnb_samples.insert(concatenate_to_gnb_samples.begin(), ids);
-    std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
+    //std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
     int size = zmq_recv(matlab_req_socket, (void *)concatenate_to_gnb_samples.data(), max_size + sizeof(std::complex<float>), 0);
     printf("recv from matlab concatenated samples = %d\n", size);
     concatenate_to_gnb_samples.erase(concatenate_to_gnb_samples.begin());
@@ -131,8 +131,8 @@ bool Broker::send_from_ues_to_matalb_and_send_to_gnb()
     gnbs[0].send_samples_to_rx(concatenate_to_gnb_samples, size - sizeof(std::complex<float>));
 
     
-    std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
-    std::fill(matlab_samples.begin(), matlab_samples.end(), 0);
+    // std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
+    // std::fill(matlab_samples.begin(), matlab_samples.end(), 0);
     return true;
 }
 
@@ -175,81 +175,6 @@ bool Broker::send_from_gnb_to_matlab_per_ue()
     return true;
 }
 
-int Broker::receive_from_matlab(void *socket_to_matlab, std::vector<uint8_t> &data, int target_rcv_data) {
-    zmq_msg_t recv_id, recv_data;
-    int sum_rcv_data = 0;
-    int rc;
-
-    data.clear();
-
-    while (sum_rcv_data < target_rcv_data) {
-        zmq_msg_init(&recv_id);
-        rc = zmq_msg_recv(&recv_id, socket_to_matlab, 0);
-        if (rc <= 0) {
-            zmq_msg_close(&recv_id);
-            fprintf(stderr, "\nFailed to receive ID\n");
-            continue;
-        }
-        zmq_msg_close(&recv_id); 
-
-        zmq_msg_init(&recv_data);
-        rc = zmq_msg_recv(&recv_data, socket_to_matlab, 0);
-        if (rc <= 0) {
-            zmq_msg_close(&recv_data);
-            fprintf(stderr, "\nFailed to receive packet\n");
-            break;
-        }
-
-        size_t recv_size = zmq_msg_size(&recv_data);
-        uint8_t* recv_ptr = static_cast<uint8_t*>(zmq_msg_data(&recv_data));
-
-        int bytes_to_copy = std::min(static_cast<int>(recv_size), target_rcv_data - sum_rcv_data);
-
-        data.insert(data.end(), recv_ptr, recv_ptr + bytes_to_copy);
-        sum_rcv_data += bytes_to_copy;
-
-        printf("socket_to_matlab [receive data] = %d (total = %d)\n", bytes_to_copy, sum_rcv_data);
-
-        if (bytes_to_copy < static_cast<int>(recv_size)) {
-            size_t extra = recv_size - bytes_to_copy;
-            printf("\nExtra data (%zu bytes) ignored\n", extra);
-            zmq_msg_close(&recv_data);
-            break;
-        }
-
-        zmq_msg_close(&recv_data);
-    }
-
-    return sum_rcv_data;
-}
-
-template <typename T>
-std::vector<uint8_t> Broker::to_byte(std::vector<T> data){
-
-    int byte_size = data.size() * sizeof(T);
-
-    std::vector<uint8_t> result(byte_size);
-
-    memcpy(result.data(), data.data(), byte_size);
-
-    return result;
-}
-
-std::vector<std::vector<std::complex<float>>> Broker::deconcatenate_all_samples(std::vector<uint8_t> &all_samples, std::vector<int> packet_sizes) {
-
-    std::vector<std::vector<std::complex<float>>> result(packet_sizes.size());
-    int offset = 0;
-
-    for(int i = 0; i < packet_sizes.size(); ++i){
-        result[i].resize(packet_sizes[i]);
-        memcpy(result[i].data(), all_samples.data() + offset + 1, packet_sizes[i]);
-
-        offset += packet_sizes[i];
-    }
-
-    return result;
-
-}
 
 void Broker::initialize_zmq_sockets()
 {
