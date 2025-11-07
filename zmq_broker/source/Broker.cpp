@@ -180,18 +180,21 @@ void Broker::initialize_zmq_sockets()
 {
     zmq_context = zmq_ctx_new();
 
-    std::string matlab_server = "tcp://localhost:" + std::to_string(matlab_port);
-    matlab_req_socket = zmq_socket (zmq_context, ZMQ_REQ);
-    int ret = zmq_connect(matlab_req_socket, matlab_server.c_str());
-    if(ret < 0){
-        printf("Failed to connect to Matlab\n");
-        is_matlab_connected = false;
+    if(enable_matlab){
+        std::string matlab_server = "tcp://localhost:" + std::to_string(matlab_port);
+        matlab_req_socket = zmq_socket (zmq_context, ZMQ_REQ);
+        int ret = zmq_connect(matlab_req_socket, matlab_server.c_str());
+        if(ret < 0){
+            printf("Failed to connect to Matlab\n");
+            is_matlab_connected = false;
+        }
+        else
+        {
+            is_matlab_connected = true;
+            printf("CONNECTED to Matlab\n");
+        }
     }
-    else
-    {
-        is_matlab_connected = true;
-        printf("CONNECTED to Matlab\n");
-    }
+    
 
     gnbs[0].initialize_sockets(zmq_context);
     gnbs[0].activate();
@@ -300,7 +303,7 @@ void Broker::run_the_world()
     broker_working_counter = 0;
     while (is_running)
     {
-        if(is_matlab_connected){
+        if(enable_matlab){
             std::cout << "---------------------------------------" << std::endl;
             if (recv_conn_accepts())
             {

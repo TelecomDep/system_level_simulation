@@ -28,6 +28,7 @@ class Broker{
         std::vector<Equipment> gnbs;
 
         bool is_matlab_connected = false;
+        bool enable_matlab = false;
         int matlab_port;
 
         void *zmq_context;

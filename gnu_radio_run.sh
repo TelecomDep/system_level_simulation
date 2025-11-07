@@ -8,7 +8,7 @@ CURRENT_DIR=$(pwd)
 LAUNCH_USER=$(whoami)
 USER_HOME="/home/$(whoami)" 
 
-NUM_UES=2
+NUM_UES=3
 
 echo $CFG_PATH
 echo $CURRENT_DIR
@@ -29,10 +29,10 @@ sleep 0.2
 # sudo ./srsRAN_4G/build/srsue/src/srsue /home/nsk/dev/system_level_simulation/configs/ue3_zmq.conf  > /home/nsk/dev/system_level_simulation/logs/4gue3.log
 
 
-# Start UEs
-# for ue_id in $(seq 1 $NUM_UES); do
-#     sudo xterm  -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue${ue_id}_zmq.conf" &
-#     pids+=($!)
-#     sleep 0.5
-#     sudo ip netns add "ue${ue_id}"
-# done
+Start UEs
+for ue_id in $(seq 1 $NUM_UES); do
+    sudo xterm  -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue${ue_id}_zmq.conf" &
+    pids+=($!)
+    sleep 0.5
+    sudo ip netns add "ue${ue_id}"
+done
