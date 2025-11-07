@@ -84,7 +84,7 @@ bool Broker::send_from_ues_to_matalb_and_send_to_gnb()
     std::vector<int> buffer_acc(N);
     std::complex<float> ids;
     int max_size = 0;
-    std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
+    //std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
     for (int i = 0; i < ues.size(); i++)
     {
         if(ues[i].is_active){
@@ -101,7 +101,7 @@ bool Broker::send_from_ues_to_matalb_and_send_to_gnb()
             }
             matlab_samples.erase(matlab_samples.begin());
 
-            std::fill(buffer_acc.begin(), buffer_acc.end(), 0);
+            //std::fill(buffer_acc.begin(), buffer_acc.end(), 0);
             int size = zmq_recv(matlab_req_socket, (void *)buffer_acc.data(), N, 0);
             if(size == -1){
                 printf("Error recv from matlab\n");
@@ -110,7 +110,7 @@ bool Broker::send_from_ues_to_matalb_and_send_to_gnb()
             }
 
 
-            if(max_size < ues[i].get_recv_nbytes() - sizeof(std::complex<float>)){
+            if(max_size < ues[i].get_recv_nbytes()){
                 max_size = ues[i].get_recv_nbytes();
                 printf("max_size = %d\n", max_size );
             }
@@ -123,7 +123,7 @@ bool Broker::send_from_ues_to_matalb_and_send_to_gnb()
     matlab_samples.erase(matlab_samples.begin());
 
     concatenate_to_gnb_samples.insert(concatenate_to_gnb_samples.begin(), ids);
-    //std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
+    std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
     int size = zmq_recv(matlab_req_socket, (void *)concatenate_to_gnb_samples.data(), max_size + sizeof(std::complex<float>), 0);
     printf("recv from matlab concatenated samples = %d\n", size);
     concatenate_to_gnb_samples.erase(concatenate_to_gnb_samples.begin());

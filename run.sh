@@ -8,12 +8,12 @@ CURRENT_DIR=$(pwd)
 LAUNCH_USER=$(whoami)
 USER_HOME="/home/$(whoami)" 
 
-NUM_UES=2
+NUM_UES=3
 
 echo $CFG_PATH
 echo $CURRENT_DIR
 start_program() {
-    sudo xterm -e "$1" -c "$2" &
+    sudo xterm  -e "$1" -c "$2" &
     pids+=($!)
     sleep 0.2
 }
@@ -35,7 +35,7 @@ sleep 0.2
 # sleep 0.2
 # sudo ip netns add "ue13"
 # Start UEs
-for ue_id in $(seq 11 13); do
+for ue_id in $(seq 11 11); do
     sudo xterm -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue${ue_id}_zmq.conf" &
     pids+=($!)
     sleep 0.5
