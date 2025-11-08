@@ -35,7 +35,7 @@ sleep 0.2
 # sleep 0.2
 # sudo ip netns add "ue13"
 # Start UEs
-for ue_id in $(seq 11 11); do
+for ue_id in $(seq 11 12); do
     sudo xterm -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue${ue_id}_zmq.conf" &
     pids+=($!)
     sleep 0.5

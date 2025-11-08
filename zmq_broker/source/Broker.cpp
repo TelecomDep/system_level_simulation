@@ -218,7 +218,7 @@ bool Broker::recv_conn_accepts()
         broker_acc_count += ues[i].is_ready_to_send();
     }
 
-    if(broker_acc_count >= 2){
+    if(broker_acc_count >= 3){
         return true;
     } else {
         printf("Not all connection Accepts are received\n");
@@ -254,6 +254,7 @@ bool Broker::send_samples_to_all_ues()
 {
     for(int i = 0; i < ues.size();i++)
     {
+        gnbs[0].divide_samples_by_value((i+1)*10.0f);
         ues[i].send_samples_to_rx(gnbs[0].get_samples_tx(), nbytes_form_gnb);
     }
     return true;
@@ -293,7 +294,7 @@ bool Broker::send_samples_to_gnb()
         }
     }
     
-    gnbs[0].send_samples_to_rx(concatenate_to_gnb_samples, nbytes_form_gnb);
+    gnbs[0].send_samples_to_rx(concatenate_to_gnb_samples, max_size);
     return true;
 }
 
@@ -324,10 +325,15 @@ void Broker::run_the_world()
         } else {
             if (recv_conn_accepts())
             {
+                std::cout << "------------->>send_conn_accepts()" << std::endl;
                 send_conn_accepts();
+                std::cout << "------------->>recv_samples_from_gNb()" << std::endl;
                 recv_samples_from_gNb();
+                std::cout << "------------->>send_samples_to_all_ues()" << std::endl;
                 send_samples_to_all_ues();
+                std::cout << "------------->>recv_samples_from_ues()" << std::endl;
                 recv_samples_from_ues();
+                std::cout << "------------->>send_samples_to_gnb()" << std::endl;
                 send_samples_to_gnb();
             } else {
                 continue;

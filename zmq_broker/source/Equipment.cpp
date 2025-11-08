@@ -55,9 +55,9 @@ void Equipment::recv_conn_accept()
 {
     memset(buffer_recv_conn_req, 0, sizeof(buffer_recv_conn_req));
     if(rep_for_srsran_rx_socket != nullptr){
-        int size = zmq_recv(rep_for_srsran_rx_socket, buffer_recv_conn_req, sizeof(buffer_recv_conn_req), 0);
+        int size = zmq_recv(rep_for_srsran_rx_socket, buffer_recv_conn_req, sizeof(buffer_recv_conn_req), NULL);
         if(size == -1){
-            printf("-->> Equipment (id[%d] type[%d]) did not recieved connection Request from RX(client) port[%d]\n", id, type, rx_port);
+            printf("!!! Equipment (id[%d] type[%d]) did not recieved connection Request from RX(client) port[%d]\n", id, type, rx_port);
             is_recv_conn_acc_from_rx = 0;
         } else{
             is_recv_conn_acc_from_rx = 1;
@@ -73,7 +73,7 @@ void Equipment::send_conn_accept()
 {
     //memset(buffer_send_conn_req, 0, sizeof(buffer_send_conn_req));
     if(rep_for_srsran_rx_socket != nullptr && is_active){
-        int send = zmq_send(req_for_srsran_tx_socket, buffer_recv_conn_req, sizeof(buffer_recv_conn_req[0]), 0);
+        int send = zmq_send(req_for_srsran_tx_socket, &dummy, sizeof(dummy), 0);
         if(send == -1){
             printf("Equipment (id[%d] type[%d]) did not send connection Request to TX(server) port[%d]\n", id, type,tx_port);
             is_send_conn_req_to_tx = 0;
@@ -93,7 +93,7 @@ int Equipment::recv_samples_from_tx(int buff_size)
 
     if (req_for_srsran_tx_socket != nullptr && is_active)
     {
-        int size = zmq_recv(req_for_srsran_tx_socket,  (void*)samples_to_transmit.data(), nbytes, 0);
+        int size = zmq_recv(req_for_srsran_tx_socket,  (void*)samples_to_transmit.data(), nbytes, NULL);
         if (size != -1)
         {
             printf("Broker received from server id[%d] type[%d] =  packet size [%d]\n",id, type, size);

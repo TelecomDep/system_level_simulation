@@ -12,9 +12,6 @@
 #include "Equipment.hpp"
 
 #define BUFFER_MAX 1024 * 1024
-
-
-typedef _Complex float cf_t;
 #define NSAMPLES2NBYTES(X) (((uint32_t)(X)) * sizeof(cf_t))
 #define NBYTES2NSAMPLES(X) ((X) / sizeof(cf_t))
 #define ZMQ_MAX_BUFFER_SIZE (NSAMPLES2NBYTES(3072000)) // 10 subframes at 20 MHz
@@ -37,7 +34,7 @@ class Broker{
         bool is_running = true;
         int broker_acc_count;
 
-        int buff_size = 300000;
+        int buff_size = BUFFER_MAX;
         int nbytes_form_gnb = 0;
         int broker_working_counter = 0;
 

@@ -2,11 +2,11 @@ NUM_UES=3
 
 echo $CFG_PATH
 echo $CURRENT_DIR
-start_program() {
-    sudo xterm -hold -e "$1" -c "$2" &
-    pids+=($!)
-    sleep 0.2
-}
+# start_program() {
+#     sudo xterm -hold -e "$1" -c "$2" &
+#     pids+=($!)
+#     sleep 0.2
+# }
 sleep 0.2
 sudo  ip  route  add  10.45.0.0/16  via  10.53.1.2
 sleep 0.2
@@ -21,12 +21,12 @@ done
 
 for ue_id in $(seq 11 11); do
     xterm -hold -e "iperf3 -s -i 1 -p 520${ue_id}" &
-    pids+=($!)
+    # pids+=($!)
     sleep 0.2
 done
 
 for ue_id in $(seq 11 11); do
     sudo xterm -e "sudo ip netns exec ue${ue_id} iperf3 -c 10.53.1.1 -R -i 1 -t 60 -b 30M -p 520${ue_id}" &
-    pids+=($!)
+    # pids+=($!)
     sleep 0.2
 done

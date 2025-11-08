@@ -23,36 +23,7 @@ void my_handler(int s){
 
 }
 
-int main(){
-
-    struct sigaction sigIntHandler;
-
-    sigIntHandler.sa_handler = my_handler;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
- 
-    sigaction(SIGINT, &sigIntHandler, NULL);
-
-    std::string config_file_path = "../configs/broker.json";
-
-    std::vector<Equipment> ues;
-    std::vector<Equipment> gnbs;
-
-    
-    ues.push_back(Equipment(2110, 2111, 1, 1));
-    // ues.push_back(Equipment(2120, 2121, 2, 1));
-    // ues.push_back(Equipment(2130, 2131, 3, 1));
-
-    gnbs.push_back(Equipment(2001, 2000, 255, 0));
-    Broker broker = Broker(config_file_path, ues, gnbs);
-    broker.enable_matlab = false;
-
-    broker.start_the_proxy();
-
-    return 0;
-}
-
-// int main(int argc, char *argv[]){
+// int main(){
 
 //     struct sigaction sigIntHandler;
 
@@ -62,178 +33,202 @@ int main(){
  
 //     sigaction(SIGINT, &sigIntHandler, NULL);
 
-//     std::cout << "ZMQ_MAX_BUFFER_SIZE = " << ZMQ_MAX_BUFFER_SIZE << std::endl;
-//     std::cout << "NBYTES_PER_ONE_SAMPLE = " << NBYTES_PER_ONE_SAMPLE << std::endl;
-//     std::cout << "sizeof(cf_t) = " << sizeof(cf_t) << std::endl;
+//     std::string config_file_path = "../configs/broker.json";
 
-//     int ret = 0;
+//     std::vector<Equipment> ues;
+//     std::vector<Equipment> gnbs;
 
-//     int port_gnb_tx = 2000;
-//     int port_gnb_rx = 2001;
-
-//     int port_ue_1_tx = 2111;
-//     int port_ue_1_rx = 2110;
-
-//     int matlab_port = 4001;
-
-//     std::string addr_recv_port_gnb_tx = "tcp://localhost:" + std::to_string(port_gnb_tx);
-//     std::string addr_recv_port_gnb_rx = "tcp://*:" + std::to_string(port_gnb_rx);
-
-//     std::string addr_recv_port_ue_1_tx = "tcp://localhost:" + std::to_string(port_ue_1_tx);
-//     std::string addr_send_port_ue_1_rx = "tcp://*:" + std::to_string(port_ue_1_rx);
-
-//     std::string matlab_server = "tcp://localhost:" + std::to_string(matlab_port);
-
-//     // Initialize ZMQ
-//     void *context = zmq_ctx_new ();
-//     void *req_socket_from_gnb_tx = zmq_socket (context, ZMQ_REQ);
-//     void *req_socket_from_ue_1_tx = zmq_socket (context, ZMQ_REQ);
     
+//     ues.push_back(Equipment(2110, 2111, 1, 1));
+//     ues.push_back(Equipment(2120, 2121, 2, 1));
+//     // ues.push_back(Equipment(2130, 2131, 3, 1));
 
-//     ret = zmq_connect(req_socket_from_gnb_tx, addr_recv_port_gnb_tx.c_str());
-//     printf("ret = %d\n",ret);
+//     gnbs.push_back(Equipment(2001, 2000, 255, 0));
+//     Broker broker = Broker(config_file_path, ues, gnbs);
+//     broker.enable_matlab = false;
 
-//     ret = zmq_connect(req_socket_from_ue_1_tx, addr_recv_port_ue_1_tx.c_str());
-//     printf("ret = %d\n",ret);
-
-//     // void *matlab_server_req_socket = zmq_socket (context, ZMQ_REQ);
-//     // ret = zmq_connect(matlab_server_req_socket, matlab_server.c_str());
-//     // printf("Connection to matlab server ret = %d\n",ret);
-
-//     void *send_socket_for_gnb_rx = zmq_socket(context, ZMQ_REP);
-//     void *send_socket_for_ue_1_rx = zmq_socket(context, ZMQ_REP);
-
-//     if(zmq_bind(send_socket_for_gnb_rx, addr_recv_port_gnb_rx.c_str())) {
-//         perror("zmq_bind");
-//         return 1;
-//     } else {
-//         printf("zmq_bind [send_socket_for_gnb_rx]- success\n");
-//     }
-
-//     if(zmq_bind(send_socket_for_ue_1_rx, addr_send_port_ue_1_rx.c_str())) {
-//         perror("zmq_bind");
-//         return 1;
-//     } else {
-//         printf("zmq_bind [send_socket_for_ue_1_rx] - success\n");
-//     }
-
-//     using cf_t = std::complex<float>;
-//     int N = 100000;
-//     std::vector<cf_t> buffer_vec(N);
-//     std::vector<cf_t> buffer_vec_to_gnb(N);
-
-//     char buffer_acc[10];
-//     char buffer[BUFFER_MAX];
-//     int size = 0;
-//     int size_ue_2 = 0;
-//     int size_recv = 0;
-//     int size_from_ue_tx = 0;
-
-//     int num_ues = 1;
-//     int num_gnbs = 1;
-//     int broker_rcv_accept_ues[num_ues];
-//     int broker_rcv_accept_gnbs[num_gnbs];
-//     int tx_data_count = 0;
-//     int tx_count_lim = 0;
-//     float pl_ue_2 = 10.0f;
-
-//     int nbytes = buffer_vec.size() * sizeof(cf_t);
-//     int received_from_matlab = 0;
-//     int summ = 0;
-//     while(1){
-//         // receive conn accept from RX's
-        
-//         memset(buffer_acc, 0, sizeof(buffer_acc));
-//         size = zmq_recv(send_socket_for_gnb_rx, buffer_acc, sizeof(buffer_acc), 0);
-//         if(size == -1){
-//             printf("!!!!!!!!!!!   -----1 send_socket_for_gnb_rx\n");
-//             broker_rcv_accept_gnbs[0] = 0;
-//             break;
-//         } else{
-//             broker_rcv_accept_gnbs[0] = 1;
-//             printf("broker received [buffer_acc] form GNB RX = %d\n", size);
-//         }
-
-
-//         memset(buffer_acc, 0, sizeof(buffer_acc));
-//         size = zmq_recv(send_socket_for_ue_1_rx, buffer_acc, sizeof(buffer_acc), 0);
-//         if(size == -1){
-//             printf("!!!!!!!!!!!   -----1 send_socket_for_ue_1_rx\n");
-//             broker_rcv_accept_ues[0] = 0;
-//             break;
-//         } else{
-//             broker_rcv_accept_ues[0] = 1;
-//             printf("broker received [buffer_acc] from UE[1] RX = %d\n", size);
-//         }
-//         for (int i = 0; i < num_ues; i++){
-//             summ += broker_rcv_accept_ues[i];
-//         }
-
-//         if (summ >= 1  && broker_rcv_accept_gnbs[0] == num_gnbs)
-//         {
-//             int send = 0;
-            
-//             // send accepts to TX's
-//             send = zmq_send(req_socket_from_gnb_tx, buffer_acc, size, 0);
-//             printf("req_socket_from_gnb_tx [send] = %d\n", send);
-//             send = zmq_send(req_socket_from_ue_1_tx, buffer_acc, size, 0);
-//             printf("req_socket_from_ue_1_tx [send] = %d\n", send);
-
-
-
-//             // start data transmissiona
-//             std::fill(buffer_vec.begin(), buffer_vec.end(), 0);
-//             size = zmq_recv(req_socket_from_gnb_tx,  (void*)buffer_vec.data(), nbytes, 0);
-//             if (size != -1)
-//             {
-//                 printf("broker received from gNb =  %d size packet buffer size = %d\n", size,buffer_vec.size());
-//             }
-//             send = zmq_send(send_socket_for_ue_1_rx, (void*)buffer_vec.data(), size, 0);
-//             printf("send_socket_for_ue_1_rx [send data] = %d\n", send);
-
-//             // TODO: Concatenate samples
-//             std::fill(buffer_vec.begin(), buffer_vec.end(), 0);
-//             size = zmq_recv(req_socket_from_ue_1_tx, (void*)buffer_vec.data(), nbytes, 0);
-//             if (size != -1)
-//             {
-//                 printf("broker [received data] from UE[1] %d size packet\n", size);
-//             }
-//             if(size == 1200){
-//                 printf("broker [received data] from UE[1] %d size packet\n", size);
-//                 sleep(10);
-//             }
-//             // buffer_vec.insert(buffer_vec.begin(), 111); // Inserts '1' at the beginning
-//             // size += sizeof(cf_t);
-
-//             // // send to matlab
-//             // send = zmq_send(matlab_server_req_socket, (void*)buffer_vec.data(), size, 0);
-//             // printf("send to matlab from UE1 %d size packet\n", size);
-
-//             // std::fill(buffer_vec.begin(), buffer_vec.end(), 0);
-//             // size = zmq_recv(matlab_server_req_socket, (void*)buffer_vec.data(), nbytes, 0);
-
-//             // // send to matlab
-//             // send = zmq_send(matlab_server_req_socket, (void*)buffer_vec.data(), size, 0);
-//             // printf("send to matlab from UE1 %d size packet\n", size);
-
-//             // std::fill(buffer_vec.begin(), buffer_vec.end(), 0);
-//             // size = zmq_recv(matlab_server_req_socket, (void*)buffer_vec.data(), nbytes, 0);
-
-//             // printf("received from matlab %d size packet\n", size);
-//             int max_size = size;
-//             send = zmq_send(send_socket_for_gnb_rx, (void*)buffer_vec.data(), max_size, 0);
-//             printf("send_socket_for_gnb_rx [send data] = %d\n", send);
-//             tx_data_count++;
-//             summ = 0;
-//         }
-//         else
-//         {
-//             continue;
-//         }
-//     }
-
-//     zmq_close(send_socket_for_gnb_rx);
-//     zmq_close (req_socket_from_ue_1_tx);
+//     broker.start_the_proxy();
 
 //     return 0;
 // }
+
+int main(int argc, char *argv[]){
+
+    struct sigaction sigIntHandler;
+
+    sigIntHandler.sa_handler = my_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+ 
+    sigaction(SIGINT, &sigIntHandler, NULL);
+
+    // std::cout << "ZMQ_MAX_BUFFER_SIZE = " << ZMQ_MAX_BUFFER_SIZE << std::endl;
+    // std::cout << "NBYTES_PER_ONE_SAMPLE = " << NBYTES_PER_ONE_SAMPLE << std::endl;
+    // std::cout << "sizeof(cf_t) = " << sizeof(cf_t) << std::endl;
+
+    int ret = 0;
+
+    int port_gnb_tx = 2000;
+    int port_gnb_rx = 2001;
+
+    int port_ue_1_tx = 2101;
+    int port_ue_1_rx = 2100;
+
+    std::string addr_recv_port_gnb_tx = "tcp://localhost:" + std::to_string(port_gnb_tx);
+    std::string addr_recv_port_gnb_rx = "tcp://*:" + std::to_string(port_gnb_rx);
+
+    std::string addr_recv_port_ue_1_tx = "tcp://localhost:" + std::to_string(port_ue_1_tx);
+    std::string addr_send_port_ue_1_rx = "tcp://*:" + std::to_string(port_ue_1_rx);
+
+    // Initialize ZMQ
+    void *context = zmq_ctx_new ();
+    void *req_socket_from_gnb_tx = zmq_socket (context, ZMQ_REQ);
+    void *req_socket_from_ue_1_tx = zmq_socket (context, ZMQ_REQ);
+    
+
+    ret = zmq_connect(req_socket_from_gnb_tx, addr_recv_port_gnb_tx.c_str());
+    printf("ret = %d\n",ret);
+
+    ret = zmq_connect(req_socket_from_ue_1_tx, addr_recv_port_ue_1_tx.c_str());
+    printf("ret = %d\n",ret);
+
+
+    void *rep_socket_for_gnb_rx = zmq_socket(context, ZMQ_REP);
+    void *rep_socket_for_ue_1_rx = zmq_socket(context, ZMQ_REP);
+
+    if(zmq_bind(rep_socket_for_gnb_rx, addr_recv_port_gnb_rx.c_str())) {
+        perror("zmq_bind");
+        return 1;
+    } else {
+        printf("zmq_bind [rep_socket_for_gnb_rx]- success\n");
+    }
+
+    if(zmq_bind(rep_socket_for_ue_1_rx, addr_send_port_ue_1_rx.c_str())) {
+        perror("zmq_bind");
+        return 1;
+    } else {
+        printf("zmq_bind [rep_socket_for_ue_1_rx] - success\n");
+    }
+
+    using cf_t = std::complex<float>;
+    int N = 100000;
+    std::vector<cf_t> buffer_vec(N);
+    std::vector<cf_t> buffer_recv_from_ue(N);
+    std::vector<cf_t> buffer_vec_to_gnb(N);
+
+    char buffer_acc[10];
+    char buffer[BUFFER_MAX];
+    int size = 0;
+    int size_ue_2 = 0;
+    int size_recv = 0;
+    int size_from_ue_tx = 0;
+
+    int num_ues = 1;
+    int num_gnbs = 1;
+    int broker_rcv_accept_ues[num_ues];
+    int broker_rcv_accept_gnbs[num_gnbs];
+    int tx_data_count = 0;
+    int tx_count_lim = 0;
+    float pl_ue_2 = 10.0f;
+
+    int nbytes = buffer_vec.size() * sizeof(cf_t);
+    int received_from_matlab = 0;
+    int summ = 0;
+    uint32_t dummy_gnb = 0;
+    uint32_t dummy_ue = 0;
+    bool gnb_rx_redy = false;
+    bool ue_rx_redy = false;
+    bool gnb_tx_samples_redy = false;
+    bool ue_tx_samples_redy = false;
+    int size_rep_gnb_rx = 0;
+    int size_rep_ue_rx = 0;
+    while (1)
+    {
+        // gnb_rx_redy = false;
+        // ue_rx_redy = false;
+        // gnb_tx_samples_redy = false;
+        // ue_tx_samples_redy = false;
+        
+        printf("-->> Получаем запрос от RX gNb\n");
+        if(!gnb_rx_redy){
+            size_rep_gnb_rx = zmq_recv(rep_socket_for_gnb_rx, &dummy_gnb, sizeof(dummy_gnb), 0);
+            if(size_rep_gnb_rx == -1){
+                printf("!!!!!!!!!!!   -----1 rep_socket_for_gnb_rx\n");
+                broker_rcv_accept_gnbs[0] = 0;
+                break;
+            } else{
+                gnb_rx_redy = true;
+                printf("broker received [buffer_acc] form GNB RX = %d dummy = %d\n", size_rep_gnb_rx, dummy_gnb);
+            }
+        }
+
+        if(!ue_rx_redy){
+            printf("-->> Получаем запрос от RX UE\n");
+            size_rep_ue_rx = zmq_recv(rep_socket_for_ue_1_rx, &dummy_ue, sizeof(dummy_ue), 0);
+            if(size_rep_ue_rx == -1){
+                printf("!!!!!!!!!!!   -----1 rep_socket_for_ue_1_rx\n");
+                broker_rcv_accept_ues[0] = 0;
+                break;
+            } else{
+                ue_rx_redy = true;
+                printf("broker received [buffer_acc] from UE[1] RX = %d dummy_ue = %d\n", size_rep_ue_rx, dummy_ue);
+            }
+        }
+        printf("--------------------------------------\n");
+
+
+            
+        printf("\n-->> Отправляем запрос и получаем СЭМПЛЫ от gNB\n");
+        int send = zmq_send(req_socket_from_gnb_tx, &dummy_ue, size_rep_ue_rx, 0);
+        printf("req_socket_from_gnb_tx [send] = %d\n", send);
+
+        std::fill(buffer_vec.begin(), buffer_vec.end(), 0);
+        int size_recv_req_tx_gnb = zmq_recv(req_socket_from_gnb_tx,  (void*)buffer_vec.data(), nbytes, ZMQ_DONTWAIT);
+        if (size_recv_req_tx_gnb != -1)
+        {
+            gnb_tx_samples_redy = true;
+            printf("broker received from gNb  bytes =  %d\n", size_recv_req_tx_gnb);
+        } else {
+            gnb_tx_samples_redy = false;
+            printf("gnb_tx_samples_redy = false;\n");
+        }
+
+        printf("\n-->> Отправляем запрос и получаем СЭМПЛЫ от UE\n");
+        send = zmq_send(req_socket_from_ue_1_tx, &dummy_gnb, size_rep_gnb_rx, 0);
+        printf("req_socket_from_ue_1_tx [send] = %d\n", send);
+
+        std::fill(buffer_recv_from_ue.begin(), buffer_recv_from_ue.end(), 0);
+        int size_recv_req_tx_ue = zmq_recv(req_socket_from_ue_1_tx, (void*)buffer_recv_from_ue.data(), nbytes, ZMQ_DONTWAIT);
+        if (size_recv_req_tx_ue != -1)
+        {
+            ue_tx_samples_redy = true;
+            printf("broker [received data] from UE[1] %d size packet\n", size_recv_req_tx_ue);
+        } else {
+            ue_tx_samples_redy = false;
+            printf("ue_tx_samples_redy = false\n");
+        }
+
+        
+        if(ue_rx_redy && gnb_tx_samples_redy){
+            printf("\n-->> Отправляем СЭМПЛЫ от gNB до UE\n");
+            send = zmq_send(rep_socket_for_ue_1_rx, (void*)buffer_vec.data(), size_recv_req_tx_gnb, 0);
+            printf("rep_socket_for_ue_1_rx [send data] = %d\n", send);
+            ue_rx_redy = false;
+        }
+        
+        if(gnb_rx_redy && ue_tx_samples_redy){
+            printf("\n-->> Отправляем СЭМПЛЫ от UE до gNB\n");
+            send = zmq_send(rep_socket_for_gnb_rx, (void*)buffer_recv_from_ue.data(), size_recv_req_tx_ue, 0);
+            printf("rep_socket_for_gnb_rx [send data] = %d\n", send);
+            gnb_rx_redy = false;
+        }
+        tx_data_count++;
+        // summ = 0;
+        printf("-------ЗАКОНЧИЛИ ИТЕРАЦИЮ -----------\n");
+    }
+
+    zmq_close(rep_socket_for_gnb_rx);
+    zmq_close (req_socket_from_ue_1_tx);
+
+    return 0;
+}

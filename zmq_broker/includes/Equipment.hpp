@@ -3,13 +3,19 @@
 #include <complex>
 #include <vector>
 
+#define BUFFER_MAX 1024 * 1024
+#define NSAMPLES2NBYTES(X) (((uint32_t)(X)) * sizeof(cf_t))
+#define NBYTES2NSAMPLES(X) ((X) / sizeof(cf_t))
+#define ZMQ_MAX_BUFFER_SIZE (NSAMPLES2NBYTES(3072000)) // 10 subframes at 20 MHz
+#define NBYTES_PER_ONE_SAMPLE (NSAMPLES2NBYTES(1)) // 1 sample
+
 class Equipment {
     public:
         int id;
         int type;
         int rx_port;
         int tx_port;
-        int N = 300000;
+        int N = BUFFER_MAX;
         
         std::vector<std::complex<float>> samples_rx;
         std::vector<std::complex<float>> samples_to_transmit;
@@ -19,9 +25,10 @@ class Equipment {
 
         // server on our side - client on the srsRAN side
         void *rep_for_srsran_rx_socket = nullptr;
-
+        int sent_to_gnb = 0;
         int is_recv_conn_acc_from_rx = 0;
         int is_send_conn_req_to_tx = 0;
+        uint8_t dummy = 0;
         char buffer_recv_conn_req[10];
         char buffer_send_conn_req[10];
         int curr_recv_from_tx_pack_size = 0;
