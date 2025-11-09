@@ -23,35 +23,6 @@ void my_handler(int s){
 
 }
 
-// int main(){
-
-//     struct sigaction sigIntHandler;
-
-//     sigIntHandler.sa_handler = my_handler;
-//     sigemptyset(&sigIntHandler.sa_mask);
-//     sigIntHandler.sa_flags = 0;
- 
-//     sigaction(SIGINT, &sigIntHandler, NULL);
-
-//     std::string config_file_path = "../configs/broker.json";
-
-//     std::vector<Equipment> ues;
-//     std::vector<Equipment> gnbs;
-
-    
-//     ues.push_back(Equipment(2110, 2111, 1, 1));
-//     ues.push_back(Equipment(2120, 2121, 2, 1));
-//     // ues.push_back(Equipment(2130, 2131, 3, 1));
-
-//     gnbs.push_back(Equipment(2001, 2000, 255, 0));
-//     Broker broker = Broker(config_file_path, ues, gnbs);
-//     broker.enable_matlab = false;
-
-//     broker.start_the_proxy();
-
-//     return 0;
-// }
-
 int main(int argc, char *argv[]){
 
     struct sigaction sigIntHandler;
@@ -143,12 +114,7 @@ int main(int argc, char *argv[]){
     int size_rep_gnb_rx = 0;
     int size_rep_ue_rx = 0;
     while (1)
-    {
-        // gnb_rx_redy = false;
-        // ue_rx_redy = false;
-        // gnb_tx_samples_redy = false;
-        // ue_tx_samples_redy = false;
-        
+    {        
         printf("-->> Получаем запрос от RX gNb\n");
         if(!gnb_rx_redy){
             size_rep_gnb_rx = zmq_recv(rep_socket_for_gnb_rx, &dummy_gnb, sizeof(dummy_gnb), 0);

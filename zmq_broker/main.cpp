@@ -1,36 +1,29 @@
 #include <iostream>
-#include <csignal>
+#include <mutex>
+#include <zmq.h>
+#include <thread>
+#include <cstring>
+#include <cmath>
+#include <unistd.h>
+
+#include <vector>
+#include <random>
+#include <complex>
+#include <algorithm>
+#include <time.h>
 
 #include "includes/Broker.hpp"
 #include "includes/subfunc.hpp"
 
 
-typedef _Complex float cf_t;
+void my_handler(int s){
+    printf("Caught signal %d\n",s);
+    
+    exit(1); 
 
-#define BUFFER_MAX 1024 * 1024
-#define NSAMPLES2NBYTES(X) (((uint32_t)(X)) * sizeof(cf_t))
-#define NBYTES2NSAMPLES(X) ((X) / sizeof(cf_t))
-#define ZMQ_MAX_BUFFER_SIZE (NSAMPLES2NBYTES(3072000)) // 10 subframes at 20 MHz
-#define NBYTES_PER_ONE_SAMPLE (NSAMPLES2NBYTES(1)) // 1 sample
+}
 
-#define DEFAULT_PATH_TO_CONFIG "../../configs/zmq_broker.conf"
-
-int main(int argc, char *argv[]){
-
-    std::string path_to_config;
-
-    if(argc > 2){
-        printf("Invalid arguments");
-        return 1;
-    }
-
-    if(argc == 2){
-        path_to_config = argv[1];
-    }
-
-    if(argc == 1){
-        path_to_config = DEFAULT_PATH_TO_CONFIG;
-    }
+int main(){
 
     struct sigaction sigIntHandler;
 
@@ -40,75 +33,21 @@ int main(int argc, char *argv[]){
  
     sigaction(SIGINT, &sigIntHandler, NULL);
 
-    broker_args args;
+    std::string config_file_path = "../configs/broker.json";
 
-    //parsing
-    if(broker_config_parser(&args, path_to_config) != 0){
-        printf("ERROR: Invalid parsing");
-        return 1;
-    }
+    std::vector<Equipment> ues;
+    std::vector<Equipment> gnbs;
 
-    //split strings with ports
-    std::vector<int> ue_rx_port = ports_to_int(args.ue_rx_port);
-    std::vector<int> ue_tx_port = ports_to_int(args.ue_tx_port);
+    ues.push_back(Equipment(2100, 2101, 1, 1));
+    // ues.push_back(Equipment(2110, 2111, 1, 1));
+    // ues.push_back(Equipment(2120, 2121, 2, 1));
+    // ues.push_back(Equipment(2130, 2131, 3, 1));
 
-    //check errors
-    if(args.ue_count != ue_rx_port.size() || args.ue_count != ue_tx_port.size()){
-        printf("\nERROR: Ue count not equal ports count\n");
-        return 1;
-    }
+    gnbs.push_back(Equipment(2001, 2000, 255, 0));
+    Broker broker = Broker(config_file_path, ues, gnbs);
+    broker.enable_matlab = false;
 
-    if(args.ue_count == -1){
-        printf("ERROR: Config file does not contain ue_count");
-        return 1;
-    }
-
-    if(args.gnb_rx_port == -1){
-        printf("ERROR: Config file does not contain gnb_rx_port");
-        return 1;
-    }
-
-    if(args.gnb_tx_port == -1){
-        printf("ERROR: Config file does not contain gnb_tx_port");
-        return 1;
-    }
-
-    if(args.matlab_port == -1){
-        printf("ERROR: Config file does not contain matlab_port");
-        return 1;
-    }
-
-    int num_ues = args.ue_count;
-    int num_gnbs = 1;
-
-    std::vector<UserEquipment> ues;
-
-    //create ues
-    for(int i = 0; i < num_ues; ++i){
-        ues.push_back(UserEquipment(ue_rx_port[i], ue_tx_port[i], 1));
-    }
-
-    //create gnb
-    std::vector<gNodeB> gnbs;
-
-    gnbs.push_back(gNodeB(args.gnb_rx_port, args.gnb_tx_port, 1));
-
-    std::cout << "\n========= Start ZMQ =========\n";
-
-    std::cout << "ZMQ_MAX_BUFFER_SIZE = " << ZMQ_MAX_BUFFER_SIZE << std::endl;
-    std::cout << "NBYTES_PER_ONE_SAMPLE = " << NBYTES_PER_ONE_SAMPLE << std::endl;
-    std::cout << "sizeof(cf_t) = " << sizeof(cf_t) << std::endl;
-
-    //create broker
-
-    Broker broker;
-
-    if(!args.matlab_enable)
-        broker = Broker(ues, gnbs);
-    else
-        broker = Broker(ues, gnbs, args.matlab_port);
-
-    broker.run();
+    broker.start_the_proxy();
 
     return 0;
-}  
+}

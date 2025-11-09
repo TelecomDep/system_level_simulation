@@ -15,10 +15,16 @@ class Equipment {
         int type;
         int rx_port;
         int tx_port;
-        int N = BUFFER_MAX;
-        
+        int N = 100000;
+
+        bool rx_ready = false;
+        bool tx_samples_ready = false;
+        uint8_t dummy = 0;
+        int dummy_size = 0;
+
         std::vector<std::complex<float>> samples_rx;
         std::vector<std::complex<float>> samples_to_transmit;
+        int ready_to_tx_n_bytes = 0;
 
         // client on our side  - server on the srsRAN side
         void *req_for_srsran_tx_socket = nullptr; 
@@ -28,17 +34,25 @@ class Equipment {
         int sent_to_gnb = 0;
         int is_recv_conn_acc_from_rx = 0;
         int is_send_conn_req_to_tx = 0;
-        uint8_t dummy = 0;
         char buffer_recv_conn_req[10];
         char buffer_send_conn_req[10];
         int curr_recv_from_tx_pack_size = 0;
-        bool is_active = false;
+        bool is_active = true;
 
     public:
         Equipment(int port_rx, int port_tx, int id, int type);
 
+        // Async working
         void initialize_sockets(void *zmq_context);
+        void rep_recv_conn_request_from_req();
+        void send_req_to_get_samples_from_rep(uint8_t opposite_dummy, int opposite_size);
+        void send_samples_to_req_rx(std::vector<std::complex<float>>& samples, int nbytes);
 
+        bool is_rx_ready();
+        bool is_tx_samples_ready();
+        int get_ready_to_tx_bytes();
+
+        // OLD
         void recv_conn_accept();
         void send_conn_accept();
 

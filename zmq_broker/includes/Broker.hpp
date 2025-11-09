@@ -32,9 +32,10 @@ class Broker{
         void *matlab_req_socket;
 
         bool is_running = true;
-        int broker_acc_count;
+        int broker_acc_count = 0;
+        int all_ues_samples_ready = 0;
 
-        int buff_size = BUFFER_MAX;
+        int buff_size = 100000;
         int nbytes_form_gnb = 0;
         int broker_working_counter = 0;
 
@@ -52,8 +53,24 @@ class Broker{
         std::vector<std::vector<std::complex<float>>> deconcatenate_all_samples(std::vector<uint8_t> &all_samples, std::vector<int> packet_sizes);
 
     private:
+        // Async
         void initialize_zmq_sockets();
+        void run_async_world();
 
+        void async_recv_conn_request_from_reqs();
+        void async_send_request_for_samples_ang_get_samples();
+        void async_send_samples_to_all_ues();
+        void async_send_concatenated_sampled_from_ues_to_gnb();
+        void async_check_ues_samples_ready();
+
+        // OLD
+        // OLD
+        // OLD
+        // OLD
+        // OLD
+        // OLD
+        // OLD
+        // OLD
         // Connection requests and accepts
         bool recv_conn_accepts();
         bool send_conn_accepts();
