@@ -320,24 +320,24 @@ void Broker::async_send_request_for_samples_ang_get_samples()
     int dummy_size = 1;
     bool check = false;
 
-    // for (int i = 0; i < ues.size(); i++)
-    // {
-    //     if(ues[i].is_rx_ready()){
-    //         check = true;
-    //         dummy = ues[i].dummy;
-    //         dummy_size = ues[i].dummy_size;
-    //         break;
-    //     }
-    // }
+    for (int i = 0; i < ues.size(); i++)
+    {
+        //if(ues[i].is_rx_ready()){
+            check = true;
+            dummy = ues[i].dummy;
+            dummy_size = ues[i].dummy_size;
+            //break;
+        //}
+    }
     gnbs[0].send_req_to_get_samples_from_rep(dummy, dummy_size);
     
     for(int i = 0; i < ues.size();i++)
     {
-        if(gnbs[0].is_rx_ready()){
+        //if(gnbs[0].is_rx_ready()){
             dummy = gnbs[0].dummy;
             dummy_size = gnbs[0].dummy_size;
             ues[i].send_req_to_get_samples_from_rep(dummy, dummy_size);
-        }
+        //}
     }
 }
 
@@ -392,20 +392,20 @@ void Broker::send_request_for_samples_and_get_samples_from_ues()
 void Broker::async_send_samples_to_all_ues()
 {
     bool gnb_samples_ready = gnbs[0].is_tx_samples_ready();
-    
+    std::fill(matlab_samples.begin(), matlab_samples.end(), 0);
     //if(gnbs[0].is_tx_samples_ready()) {
         for (int i = 0; i < ues.size(); i++)
         {
-            if(ues[i].is_rx_ready()) { 
-                std::fill(matlab_samples.begin(), matlab_samples.end(), 0);
+            if(gnbs[0].is_tx_samples_ready()) { 
                 matlab_samples = gnbs[0].samples_to_transmit;
-                float pl = (i+1) * 30.0f;
+                float pl = (i+1) * 10.0f;
                 for (int i = 0; i < matlab_samples.size(); i++){
                     std::complex<float> val_1;
                     val_1 = std::complex<float>(matlab_samples[i].real()/pl, matlab_samples[i].imag()/pl);
                     matlab_samples[i] = val_1;
                 }
                 ues[i].send_samples_to_req_rx(matlab_samples, gnbs[0].get_ready_to_tx_bytes());
+                //ues[i].send_samples_to_req_rx(gnbs[0].get_samples_tx(), gnbs[0].get_ready_to_tx_bytes());
             }   
         }
     //}
@@ -443,6 +443,7 @@ void Broker::async_send_concatenated_sampled_from_ues_to_gnb()
     // Отправляем сумму сэмплов на базовую станцию
     if(check){
         gnbs[0].send_samples_to_req_rx(concatenate_to_gnb_samples, max_size);
+        //gnbs[0].send_samples_to_req_rx(ues[0].get_samples_tx(), ues[0].get_ready_to_tx_bytes());
     }
 }
 

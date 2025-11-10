@@ -140,7 +140,6 @@ int main(int argc, char *argv[]){
         }
         printf("--------------------------------------\n");
 
-
             
         printf("\n-->> Отправляем запрос и получаем СЭМПЛЫ от gNB\n");
         int send = zmq_send(req_socket_from_gnb_tx, &dummy_ue, size_rep_ue_rx, 0);
