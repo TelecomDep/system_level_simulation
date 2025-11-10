@@ -71,20 +71,22 @@ void Equipment::send_req_to_get_samples_from_rep(uint8_t opposite_dummy, int opp
 {
 
     int send = zmq_send(req_for_srsran_tx_socket, &opposite_dummy, opposite_size, 0);
-    printf("req_socket_from_gnb_tx [send] = %d\n", send);
+    printf("req_socket_from_gnb_tx [send] %d id[%d] type[%d]\n",send, id, type);
 
-    
-    std::fill(samples_to_transmit.begin(), samples_to_transmit.end(), 0);
-    int nbytes = samples_to_transmit.size() * sizeof(std::complex<float>);
-    int size = zmq_recv(req_for_srsran_tx_socket,  (void*)samples_to_transmit.data(), nbytes, ZMQ_DONTWAIT);
-    if (size != -1)
-    {
-        ready_to_tx_n_bytes = size;
-        tx_samples_ready = true;
-        printf("Broker received from server id[%d] type[%d] =  packet size [%d]\n",id, type, size);
-    } else {
-        tx_samples_ready = false;
-        printf("!!gnb_tx_samples_ready = false;  id[%d] type[%d] =  packet size [%d]\n",id, type, size);
+    if(send > 0){
+        printf("try to recv samples id[%d] type[%d]\n",id, type);
+        std::fill(samples_to_transmit.begin(), samples_to_transmit.end(), 0);
+        int nbytes = samples_to_transmit.size() * sizeof(std::complex<float>);
+        int size = zmq_recv(req_for_srsran_tx_socket,  (void*)samples_to_transmit.data(), nbytes, ZMQ_DONTWAIT);
+        if (size != -1)
+        {
+            ready_to_tx_n_bytes = size;
+            tx_samples_ready = true;
+            printf("Broker received from server id[%d] type[%d] =  packet size [%d]\n",id, type, size);
+        } else {
+            tx_samples_ready = false;
+            printf("!!gnb_tx_samples_ready = false;  id[%d] type[%d] =  packet size [%d]\n",id, type, size);
+        }
     }
     
 }
@@ -110,27 +112,26 @@ bool Equipment::is_tx_samples_ready()
 
 void Equipment::recv_conn_accept()
 {
-    memset(buffer_recv_conn_req, 0, sizeof(buffer_recv_conn_req));
     if(rep_for_srsran_rx_socket != nullptr){
-        int size = zmq_recv(rep_for_srsran_rx_socket, buffer_recv_conn_req, sizeof(buffer_recv_conn_req), NULL);
+        int size = zmq_recv(rep_for_srsran_rx_socket, &dummy, sizeof(dummy), NULL);
         if(size == -1){
             printf("!!! Equipment (id[%d] type[%d]) did not recieved connection Request from RX(client) port[%d]\n", id, type, rx_port);
             is_recv_conn_acc_from_rx = 0;
         } else{
             is_recv_conn_acc_from_rx = 1;
             curr_recv_from_tx_pack_size = size;
-            printf("Equipment (id[%d] type[%d]) received [buffer_recv_conn_req] RX(client) port[%d] size [%d]\n", id, type, rx_port, size);
+            printf("Equipment (id[%d] type[%d]) received [buffer_recv_conn_req] RX(client) port[%d] size [%d] dummy [%d]\n", id, type, rx_port, size, dummy);
         }
     } else {
         std::cout << "rep_for_srsran_rx_socket = nullptr" << std::endl;
     }
 }
 
-void Equipment::send_conn_accept()
+void Equipment::send_conn_accept(uint8_t opposite_dummy, int opposite_size)
 {
     //memset(buffer_send_conn_req, 0, sizeof(buffer_send_conn_req));
     if(rep_for_srsran_rx_socket != nullptr && is_active){
-        int send = zmq_send(req_for_srsran_tx_socket, &dummy, sizeof(dummy), 0);
+        int send = zmq_send(req_for_srsran_tx_socket, &opposite_dummy, opposite_size, 0);
         if(send == -1){
             printf("Equipment (id[%d] type[%d]) did not send connection Request to TX(server) port[%d]\n", id, type,tx_port);
             is_send_conn_req_to_tx = 0;
@@ -146,11 +147,11 @@ void Equipment::send_conn_accept()
 int Equipment::recv_samples_from_tx(int buff_size)
 {
     int nbytes = samples_to_transmit.size() * sizeof(std::complex<float>);
-    std::fill(samples_to_transmit.begin(), samples_to_transmit.end(), 0);
+    //std::fill(samples_to_transmit.begin(), samples_to_transmit.end(), 0);
 
     if (req_for_srsran_tx_socket != nullptr && is_active)
     {
-        int size = zmq_recv(req_for_srsran_tx_socket,  (void*)samples_to_transmit.data(), nbytes, NULL);
+        int size = zmq_recv(req_for_srsran_tx_socket,  (void*)samples_to_transmit.data(), nbytes, 0);
         if (size != -1)
         {
             printf("Broker received from server id[%d] type[%d] =  packet size [%d]\n",id, type, size);
@@ -178,7 +179,6 @@ int Equipment::get_recv_nbytes()
 
 void Equipment::send_samples_to_rx(std::vector<std::complex<float>>& samples, int buff_size)
 {
-    int nbytes = buff_size * sizeof(std::complex<float>)/8;
     if(rep_for_srsran_rx_socket != nullptr && is_active){
         int send = zmq_send(rep_for_srsran_rx_socket, (void*)samples.data(), buff_size, 0);
         if(send != -1){

@@ -117,11 +117,10 @@ int main(int argc, char *argv[]){
     {        
         printf("-->> Получаем запрос от RX gNb\n");
         if(!gnb_rx_redy){
-            size_rep_gnb_rx = zmq_recv(rep_socket_for_gnb_rx, &dummy_gnb, sizeof(dummy_gnb), 0);
+            size_rep_gnb_rx = zmq_recv(rep_socket_for_gnb_rx, &dummy_gnb, sizeof(dummy_gnb), ZMQ_DONTWAIT);
             if(size_rep_gnb_rx == -1){
                 printf("!!!!!!!!!!!   -----1 rep_socket_for_gnb_rx\n");
                 broker_rcv_accept_gnbs[0] = 0;
-                break;
             } else{
                 gnb_rx_redy = true;
                 printf("broker received [buffer_acc] form GNB RX = %d dummy = %d\n", size_rep_gnb_rx, dummy_gnb);
@@ -130,11 +129,10 @@ int main(int argc, char *argv[]){
 
         if(!ue_rx_redy){
             printf("-->> Получаем запрос от RX UE\n");
-            size_rep_ue_rx = zmq_recv(rep_socket_for_ue_1_rx, &dummy_ue, sizeof(dummy_ue), 0);
+            size_rep_ue_rx = zmq_recv(rep_socket_for_ue_1_rx, &dummy_ue, sizeof(dummy_ue), ZMQ_DONTWAIT);
             if(size_rep_ue_rx == -1){
                 printf("!!!!!!!!!!!   -----1 rep_socket_for_ue_1_rx\n");
                 broker_rcv_accept_ues[0] = 0;
-                break;
             } else{
                 ue_rx_redy = true;
                 printf("broker received [buffer_acc] from UE[1] RX = %d dummy_ue = %d\n", size_rep_ue_rx, dummy_ue);

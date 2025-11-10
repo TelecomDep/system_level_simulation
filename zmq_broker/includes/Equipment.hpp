@@ -19,7 +19,7 @@ class Equipment {
 
         bool rx_ready = false;
         bool tx_samples_ready = false;
-        uint8_t dummy = 0;
+        uint32_t dummy = 0;
         int dummy_size = 0;
 
         std::vector<std::complex<float>> samples_rx;
@@ -54,7 +54,7 @@ class Equipment {
 
         // OLD
         void recv_conn_accept();
-        void send_conn_accept();
+        void send_conn_accept(uint8_t opposite_dummy, int opposite_size);
 
         int recv_samples_from_tx(int buff_size);
         void send_samples_to_rx(std::vector<std::complex<float>>& samples, int buff_size);

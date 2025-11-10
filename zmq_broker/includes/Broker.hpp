@@ -57,6 +57,11 @@ class Broker{
         void initialize_zmq_sockets();
         void run_async_world();
 
+        void recv_conn_request_from_gnb();
+        void recv_conn_request_from_ues();
+        void send_request_for_samples_and_get_samples_from_gnb();
+        void send_request_for_samples_and_get_samples_from_ues();
+
         void async_recv_conn_request_from_reqs();
         void async_send_request_for_samples_ang_get_samples();
         void async_send_samples_to_all_ues();
