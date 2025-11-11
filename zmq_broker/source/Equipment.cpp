@@ -71,11 +71,13 @@ void Equipment::rep_recv_conn_request_from_req()
 void Equipment::send_req_to_get_samples_from_rep(uint8_t opposite_dummy, int opposite_size)
 {
 
-    int send = zmq_send(req_for_srsran_tx_socket, &opposite_dummy, opposite_size, 0);
-    printf("req_socket_from_gnb_tx [send] %d id[%d] type[%d]\n",send, id, type);
-
+    if(!this->tx_samples_ready){
+        int send = zmq_send(req_for_srsran_tx_socket, &opposite_dummy, opposite_size, 0);
+        printf("req_socket_from_gnb_tx [send] %d id[%d] type[%d]\n",send, id, type);
+    }
+    
     //if(send >= 0){
-        std::fill(samples_to_transmit.begin(), samples_to_transmit.end(), 0);
+        //std::fill(samples_to_transmit.begin(), samples_to_transmit.end(), 0);
         int nbytes = samples_to_transmit.size() * sizeof(std::complex<float>);
         int size = zmq_recv(req_for_srsran_tx_socket,  (void*)samples_to_transmit.data(), nbytes, ZMQ_DONTWAIT);
         if (size != -1)
@@ -88,6 +90,7 @@ void Equipment::send_req_to_get_samples_from_rep(uint8_t opposite_dummy, int opp
             printf("!!gnb_tx_samples_ready = false;  id[%d] type[%d] =  packet size [%d]\n",id, type, size);
         }
     //}
+    
     
 }
 

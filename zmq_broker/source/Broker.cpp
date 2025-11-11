@@ -205,105 +205,6 @@ void Broker::initialize_zmq_sockets()
     }
 }
 
-bool Broker::recv_conn_accepts()
-{
-    broker_acc_count = 0;
-
-    gnbs[0].recv_conn_accept();
-    broker_acc_count += gnbs[0].is_ready_to_send();
-
-    for(int i = 0; i < ues.size();i++)
-    {
-        ues[i].recv_conn_accept();
-        broker_acc_count += ues[i].is_ready_to_send();
-    }
-
-    if(broker_acc_count >= 2){
-        return true;
-    } else {
-        printf("Not all connection Accepts are received\n");
-        return false;
-    }
-}
-
-bool Broker::send_conn_accepts()
-{
-    uint8_t dummy = 255;
-    int dummy_size = 1;
-    bool check = false;
-
-    gnbs[0].send_conn_accept(dummy, dummy_size);
-    
-    for(int i = 0; i < ues.size();i++)
-    {
-        dummy = gnbs[0].dummy;
-        dummy_size = 1;
-        ues[i].send_conn_accept(dummy,dummy_size);
-    }
-    return true;
-}
-
-void Broker::send_recv_samples_from_Ues_to_matlab()
-{
-    
-}
-
-bool Broker::recv_samples_from_gNb()
-{
-    // TODO: Пока работает только с 1 базово станцией
-    nbytes_form_gnb = gnbs[0].recv_samples_from_tx(buff_size);
-
-    return true;
-}
-
-bool Broker::send_samples_to_all_ues()
-{
-    for(int i = 0; i < ues.size();i++)
-    {
-        //gnbs[0].divide_samples_by_value((i+1)*10.0f);
-        ues[i].send_samples_to_rx(gnbs[0].get_samples_tx(), gnbs[0].get_recv_nbytes());
-    }
-    return true;
-}
-
-bool Broker::recv_samples_from_ues()
-{
-    for (int i = 0; i < ues.size();i++)
-    {
-        ues[i].recv_samples_from_tx(buff_size);
-    }
-
-    return true;
-}
-
-bool Broker::send_samples_to_gnb()
-{
-    // TODO: добавить передачу сэмплов, полученных с матлаба
-    int max_size = 0;
-    std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
-    for (int i = 0; i < ues.size(); i++)
-    {
-        //ues[i].divide_samples_by_value((i+1)*10.0f); // path losses
-        // TODO: либо concatenate
-        //concatenate_to_gnb_samples
-        
-        if(ues[i].is_active){
-            if(max_size < ues[i].get_nbytes_recv_from_tx())
-            {
-                max_size = ues[i].get_nbytes_recv_from_tx();
-            }
-            std::transform( concatenate_to_gnb_samples.begin(), 
-                            concatenate_to_gnb_samples.end(), 
-                            ues[i].get_samples_tx().begin(), 
-                            concatenate_to_gnb_samples.begin(), 
-                            std::plus<std::complex<float>>());
-        }
-    }
-    
-    gnbs[0].send_samples_to_rx(concatenate_to_gnb_samples, max_size);
-    return true;
-}
-
 void Broker::async_recv_conn_request_from_reqs()
 {
     gnbs[0].rep_recv_conn_request_from_req();
@@ -392,11 +293,11 @@ void Broker::send_request_for_samples_and_get_samples_from_ues()
 void Broker::async_send_samples_to_all_ues()
 {
     bool gnb_samples_ready = gnbs[0].is_tx_samples_ready();
-    std::fill(matlab_samples.begin(), matlab_samples.end(), 0);
     //if(gnbs[0].is_tx_samples_ready()) {
         for (int i = 0; i < ues.size(); i++)
         {
             if(gnbs[0].is_tx_samples_ready()) { 
+                //std::fill(matlab_samples.begin(), matlab_samples.end(), 0);
                 matlab_samples = gnbs[0].samples_to_transmit;
                 float pl = (i+1) * 10.0f;
                 for (int i = 0; i < matlab_samples.size(); i++){
@@ -421,7 +322,7 @@ void Broker::async_send_concatenated_sampled_from_ues_to_gnb()
     bool check = false;
     for (int i = 0; i < ues.size(); i++)
     {
-        if(ues[i].is_tx_samples_ready()){
+        if(ues[i].is_tx_samples_ready() && all_ues_samples_received){
         
             check = true;
             if (max_size < ues[i].get_ready_to_tx_bytes())
@@ -443,7 +344,9 @@ void Broker::async_send_concatenated_sampled_from_ues_to_gnb()
     // Отправляем сумму сэмплов на базовую станцию
     if(check){
         gnbs[0].send_samples_to_req_rx(concatenate_to_gnb_samples, max_size);
-        //gnbs[0].send_samples_to_req_rx(ues[0].get_samples_tx(), ues[0].get_ready_to_tx_bytes());
+        all_ues_samples_ready = 0;
+        all_ues_samples_received = false;
+        // gnbs[0].send_samples_to_req_rx(ues[0].get_samples_tx(), ues[0].get_ready_to_tx_bytes());
     }
 }
 
@@ -454,6 +357,9 @@ void Broker::async_check_ues_samples_ready()
         if(ues[i].is_tx_samples_ready()){
             all_ues_samples_ready++;
         }
+    }
+    if(all_ues_samples_ready == ues.size()){
+        all_ues_samples_received = true;
     }
 }   
 
@@ -475,7 +381,7 @@ void Broker::run_async_world()
             std::cout << "------------->>отправили сэмплы от gNb до UEs" << std::endl;
             async_send_samples_to_all_ues();
             std::cout << "------------->>отправили сэмплы от UEs до gNb" << std::endl;
-
+            async_check_ues_samples_ready();
             async_send_concatenated_sampled_from_ues_to_gnb();
             std::cout << "------------------Конец---------------------" << std::endl;
             
@@ -484,52 +390,33 @@ void Broker::run_async_world()
     }
 }
 
-void Broker::run_the_world()
-{
-    broker_working_counter = 0;
-    while (is_running)
-    {
-        if(enable_matlab){
-            std::cout << "---------------------------------------" << std::endl;
-            if (recv_conn_accepts())
-            {
-                std::cout << "------------->>send_conn_accepts()" << std::endl;
-                send_conn_accepts();
+// void Broker::run_the_world()
+// {
+//     broker_working_counter = 0;
+//     while (is_running)
+//     {
+//         if(enable_matlab){
+//             std::cout << "---------------------------------------" << std::endl;
+//             if (recv_conn_accepts())
+//             {
+//                 std::cout << "------------->>send_conn_accepts()" << std::endl;
+//                 send_conn_accepts();
 
-                std::cout << "------------->>recv_samples_from_gNb()" << std::endl;
-                recv_samples_from_gNb();
-                send_from_gnb_to_matlab_per_ue();
+//                 std::cout << "------------->>recv_samples_from_gNb()" << std::endl;
+//                 recv_samples_from_gNb();
+//                 send_from_gnb_to_matlab_per_ue();
 
-                std::cout << "------------->>recv_samples_from_ues()" << std::endl;
-                recv_samples_from_ues();
+//                 std::cout << "------------->>recv_samples_from_ues()" << std::endl;
+//                 recv_samples_from_ues();
 
-                send_from_ues_to_matalb_and_send_to_gnb();
-            } else {
-                continue;
-            }
-        } else {
-            if (recv_conn_accepts())
-            {
-                std::cout << "------------->>send_conn_accepts()" << std::endl;
-                send_conn_accepts();
-                std::cout << "------------->>recv_samples_from_gNb()" << std::endl;
-
-                recv_samples_from_gNb();
-                std::cout << "------------->>send_samples_to_all_ues()" << std::endl;
-                send_samples_to_all_ues();
-
-                std::cout << "------------->>recv_samples_from_ues()" << std::endl;
-                recv_samples_from_ues();
-                std::cout << "------------->>send_samples_to_gnb()" << std::endl;
-                send_samples_to_gnb();
-            } else {
-                continue;
-            }
-
-        }
-        broker_working_counter++;
-    }
-}
+//                 send_from_ues_to_matalb_and_send_to_gnb();
+//             } else {
+//                 continue;
+//             }
+//         }
+//         broker_working_counter++;
+//     }
+// }
 
 void Broker::start_the_proxy()
 {

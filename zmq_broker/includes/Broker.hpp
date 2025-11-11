@@ -7,8 +7,6 @@
 #include <vector>
 #include <zmq.h>
 
-#include "gNB.hpp"
-#include "UE.hpp"
 #include "Equipment.hpp"
 
 #define BUFFER_MAX 1024 * 1024
@@ -37,6 +35,7 @@ class Broker{
 
         int buff_size = 100000;
         int nbytes_form_gnb = 0;
+        bool all_ues_samples_received = true;
         int broker_working_counter = 0;
 
         std::vector<std::complex<float>> concatenate_to_gnb_samples;
@@ -95,13 +94,8 @@ class Broker{
         void run_the_world();
 
     public:
-        Broker(std::vector<UserEquipment>& _ues, std::vector<gNodeB>& _gnbs, int _matlab_port = -1);
         Broker(std::string &config_file, std::vector<Equipment>& _ues, std::vector<Equipment>& _gnbs);
         Broker();
-
-        //getters
-        std::vector<UserEquipment> get_list_of_ues() const;
-        std::vector<gNodeB> get_list_of_gnbs() const;
 
         //samples sizes from gnbs and ues
         std::vector<int> get_tx_samples_sizes() const;
@@ -109,11 +103,6 @@ class Broker{
 
         //samples from ues and gnbs
         std::vector<std::vector<std::complex<float>>> get_all_tx_samples() const;
-
-        //setters
-        void set_list_of_ues(std::vector<UserEquipment> _ues);
-        void set_list_of_gnbs(std::vector<gNodeB> _gnbs);
-
         void run();
         void start_the_proxy();
 };
