@@ -32,6 +32,7 @@ class Broker{
         bool is_running = true;
         int broker_acc_count = 0;
         int all_ues_samples_ready = 0;
+        int all_ues_rxes_ready = 0;
 
         int buff_size = 100000;
         int nbytes_form_gnb = 0;
@@ -65,7 +66,8 @@ class Broker{
         void async_send_request_for_samples_ang_get_samples();
         void async_send_samples_to_all_ues();
         void async_send_concatenated_sampled_from_ues_to_gnb();
-        void async_check_ues_samples_ready();
+        bool async_check_ues_samples_ready();
+        bool async_check_ues_rxes_ready();
 
         // OLD
         // OLD

@@ -221,16 +221,19 @@ void Broker::async_send_request_for_samples_ang_get_samples()
     int dummy_size = 1;
     bool check = false;
 
-    for (int i = 0; i < ues.size(); i++)
-    {
-        //if(ues[i].is_rx_ready()){
-            check = true;
-            dummy = ues[i].dummy;
-            dummy_size = ues[i].dummy_size;
-            //break;
-        //}
-    }
-    gnbs[0].send_req_to_get_samples_from_rep(dummy, dummy_size);
+
+    // for (int i = 0; i < ues.size(); i++)
+    // {
+    //     if(ues[i].is_rx_ready()){
+    //         check = true;
+    //         dummy = ues[i].dummy;
+    //         dummy_size = ues[i].dummy_size;
+    //         break;
+    //     }
+    // }
+    //if(async_check_ues_rxes_ready()){
+        gnbs[0].send_req_to_get_samples_from_rep(dummy, dummy_size);
+    //}
     
     for(int i = 0; i < ues.size();i++)
     {
@@ -291,15 +294,15 @@ void Broker::send_request_for_samples_and_get_samples_from_ues()
 
 
 void Broker::async_send_samples_to_all_ues()
-{
-    bool gnb_samples_ready = gnbs[0].is_tx_samples_ready();
-    //if(gnbs[0].is_tx_samples_ready()) {
+{   
+    //std::fill(matlab_samples.begin(), matlab_samples.end(), 0);
+    if(gnbs[0].is_tx_samples_ready() && async_check_ues_rxes_ready()) {
         for (int i = 0; i < ues.size(); i++)
         {
-            if(gnbs[0].is_tx_samples_ready()) { 
+            //if(gnbs[0].is_tx_samples_ready()) { 
                 //std::fill(matlab_samples.begin(), matlab_samples.end(), 0);
                 matlab_samples = gnbs[0].samples_to_transmit;
-                float pl = (i+1) * 10.0f;
+                float pl = (i+1) * 20.0f;
                 for (int i = 0; i < matlab_samples.size(); i++){
                     std::complex<float> val_1;
                     val_1 = std::complex<float>(matlab_samples[i].real()/pl, matlab_samples[i].imag()/pl);
@@ -307,61 +310,81 @@ void Broker::async_send_samples_to_all_ues()
                 }
                 ues[i].send_samples_to_req_rx(matlab_samples, gnbs[0].get_ready_to_tx_bytes());
                 //ues[i].send_samples_to_req_rx(gnbs[0].get_samples_tx(), gnbs[0].get_ready_to_tx_bytes());
-            }   
+            //}   
         }
-    //}
+        gnbs[0].tx_samples_ready = false;
+        gnbs[0].clear_samples_tx();
+        all_ues_rxes_ready = 0;
+    }
 }
 
 void Broker::async_send_concatenated_sampled_from_ues_to_gnb()
 {
     int max_size = 0;
-    
-    // Ищем самый большой размер пакета, чтобы не потерять часть сэмплов при суммировании
-    std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
+    //std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
     // Суммируем
     bool check = false;
-    for (int i = 0; i < ues.size(); i++)
-    {
-        if(ues[i].is_tx_samples_ready() && all_ues_samples_received){
-        
-            check = true;
-            if (max_size < ues[i].get_ready_to_tx_bytes())
-            {
-                max_size = ues[i].get_ready_to_tx_bytes();
-            }
+    if(async_check_ues_samples_ready()){
+        for (int i = 0; i < ues.size(); i++)
+        {
+            //if(ues[i].is_tx_samples_ready() && all_ues_samples_received){
+                if (max_size < ues[i].get_ready_to_tx_bytes())
+                {
+                    max_size = ues[i].get_ready_to_tx_bytes();
+                }
 
-            ues[i].divide_samples_by_value((i+1)*10.0f); // path losses
+                ues[i].divide_samples_by_value((i+1)*20.0f); // path losses
 
-            std::transform( concatenate_to_gnb_samples.begin(), 
-                            concatenate_to_gnb_samples.end(), 
-                            ues[i].get_samples_tx().begin(), 
-                            concatenate_to_gnb_samples.begin(), 
-                            std::plus<std::complex<float>>());
-
+                std::transform( concatenate_to_gnb_samples.begin(), 
+                                concatenate_to_gnb_samples.end(), 
+                                ues[i].get_samples_tx().begin(), 
+                                concatenate_to_gnb_samples.begin(), 
+                                std::plus<std::complex<float>>());
+                ues[i].clear_samples_tx();
+                ues[i].tx_samples_ready = false;
+                //}
         }
-    }
-
-    // Отправляем сумму сэмплов на базовую станцию
-    if(check){
         gnbs[0].send_samples_to_req_rx(concatenate_to_gnb_samples, max_size);
-        all_ues_samples_ready = 0;
-        all_ues_samples_received = false;
+        std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
         // gnbs[0].send_samples_to_req_rx(ues[0].get_samples_tx(), ues[0].get_ready_to_tx_bytes());
+        this->all_ues_samples_ready = 0;
     }
 }
 
-void Broker::async_check_ues_samples_ready()
+bool Broker::async_check_ues_samples_ready()
+{
+    int summ = 0;
+    for (int i = 0; i < ues.size(); i++)
+    {
+        // if(ues[i].is_tx_samples_ready()){
+        //     this->all_ues_samples_ready++;
+        // }
+        summ += ues[i].is_tx_samples_ready();
+    }
+    //std::cout <<"ues.size() = " << ues.size() <<"all_ues_samples_ready = " << summ<< std::endl;
+    if(summ == ues.size()){
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool Broker::async_check_ues_rxes_ready()
 {
     for (int i = 0; i < ues.size(); i++)
     {
-        if(ues[i].is_tx_samples_ready()){
-            all_ues_samples_ready++;
-        }
+        // if(ues[i].is_rx_ready()){
+        //     this->all_ues_rxes_ready++;
+        // }
+        this->all_ues_rxes_ready += ues[i].is_rx_ready();
     }
-    if(all_ues_samples_ready == ues.size()){
-        all_ues_samples_received = true;
+    //std::cout <<"ues.size() = " << ues.size() <<"all_ues = " << this->all_ues_rxes_ready<< std::endl;
+    if(this->all_ues_rxes_ready == ues.size()){
+        return true;
+    } else {
+        return false;
     }
-}   
+}
 
 void Broker::run_async_world()
 {
@@ -372,18 +395,16 @@ void Broker::run_async_world()
 
         } else 
         {
-            std::cout << "------------------Начало---------------------" << std::endl;
-            std::cout << "------------->>получили запросы от RX-ов" << std::endl;
+            //std::cout << "------------------Начало---------------------" << std::endl;
+            //std::cout << "------------->>получили запросы от RX-ов" << std::endl;
             async_recv_conn_request_from_reqs();
-            std::cout << "------------->>отправили запросы и получили сэмплы" << std::endl;
+            //std::cout << "------------->>отправили запросы и получили сэмплы" << std::endl;
             async_send_request_for_samples_ang_get_samples();
-
-            std::cout << "------------->>отправили сэмплы от gNb до UEs" << std::endl;
+            //std::cout << "------------->>отправили сэмплы от gNb до UEs" << std::endl;
             async_send_samples_to_all_ues();
-            std::cout << "------------->>отправили сэмплы от UEs до gNb" << std::endl;
-            async_check_ues_samples_ready();
+            //std::cout << "------------->>отправили сэмплы от UEs до gNb" << std::endl;
             async_send_concatenated_sampled_from_ues_to_gnb();
-            std::cout << "------------------Конец---------------------" << std::endl;
+            //std::cout << "------------------Конец---------------------" << std::endl;
             
             
         }
