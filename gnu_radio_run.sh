@@ -8,7 +8,7 @@ CURRENT_DIR=$(pwd)
 LAUNCH_USER=$(whoami)
 USER_HOME="/home/$(whoami)" 
 
-NUM_UES=1
+NUM_UES=2
 
 echo $CFG_PATH
 echo $CURRENT_DIR

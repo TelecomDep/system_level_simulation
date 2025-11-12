@@ -17,7 +17,7 @@ Equipment::Equipment(int port_rx, int port_tx, int _id, int _type){
 void Equipment::initialize_sockets(void *zmq_context)
 {
     std::string addr_port_tx = "tcp://localhost:" + std::to_string(tx_port);
-    std::string addr_port_rx = "tcp://*:" + std::to_string(rx_port);
+    std::string addr_port_rx = "tcp://localhost:" + std::to_string(rx_port);
 
     printf("|-------------------------------------------|\n");
     req_for_srsran_tx_socket = zmq_socket(zmq_context, ZMQ_REQ);
@@ -25,7 +25,7 @@ void Equipment::initialize_sockets(void *zmq_context)
         printf("NULL PTR Socket\n");
         exit(1);
     }
-    int timeout = 25000;
+    int timeout = 100;
 
     zmq_setsockopt(req_for_srsran_tx_socket, ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
 
@@ -56,14 +56,14 @@ void Equipment::rep_recv_conn_request_from_req()
     if(!this->rx_ready){
         int size = zmq_recv(rep_for_srsran_rx_socket, &dummy, sizeof(dummy), ZMQ_DONTWAIT);
         if(size == -1){
-            //printf("!!! Equipment (id[%d] type[%d]) did not recieved connection Request from RX(client) port[%d]\n", id, type, rx_port);
+            printf("!!! Equipment (id[%d] type[%d]) did not recieved connection Request from RX(client) port[%d]\n", id, type, rx_port);
             this->dummy_size = size;
         }
         else
         {
             this->rx_ready = true;
             this->dummy_size = size;
-            //printf("broker received [buffer_acc] form RX = %d dummy = %d\n", size, dummy);
+            printf("Equipment (id[%d] type[%d] port [%d]) rx_ready form RX = %d dummy = %d\n", id, type,rx_port, size, dummy);
         }
     }
 }
@@ -75,7 +75,11 @@ void Equipment::send_req_to_get_samples_from_rep(uint8_t opposite_dummy, int opp
         //std::fill(samples_to_transmit.begin(), samples_to_transmit.end(), 0);
         //this->ready_to_tx_n_bytes = 0;
         int send = zmq_send(req_for_srsran_tx_socket, &opposite_dummy, opposite_size, 0);
-        //printf("req_socket_from_gnb_tx [send] %d id[%d] type[%d]\n",send, id, type);
+        if(send > 0){
+            std::fill(samples_to_transmit.begin(), samples_to_transmit.end(), 0);
+            usleep(1000UL);
+            printf("req for samples [send] %d id[%d] type[%d]\n",send, id, type);
+        }
     }
     
     //if(send >= 0){
@@ -86,10 +90,10 @@ void Equipment::send_req_to_get_samples_from_rep(uint8_t opposite_dummy, int opp
         {
             this->ready_to_tx_n_bytes = size;
             this->tx_samples_ready = true;
-            //printf("Broker received from server id[%d] type[%d] =  packet size [%d]\n",id, type, size);
+            printf("Broker received samples from server id[%d] type[%d] =  packet size [%d]\n",id, type, size);
         } else {
             //this->tx_samples_ready = false;
-            //printf("!!gnb_tx_samples_ready = false;  id[%d] type[%d] =  packet size [%d]\n",id, type, size);
+            printf("! not received samples = false;  id[%d] type[%d] =  packet size [%d]\n",id, type, size);
         }
     //}
     
@@ -100,7 +104,7 @@ void Equipment::send_samples_to_req_rx(std::vector<std::complex<float>>& samples
 {
     if(this->rx_ready){
         int send = zmq_send(rep_for_srsran_rx_socket, (void*)samples.data(), nbytes, 0);
-        //printf("rep_socket_for_ue_1_rx [send data] = %d  id[%d] type[%d]\n",send, id, type);
+        printf("send samples [send data] = %d  id[%d] type[%d]\n",send, id, type);
         this->rx_ready = false;
     }
 }
