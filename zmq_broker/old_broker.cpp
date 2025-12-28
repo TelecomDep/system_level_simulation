@@ -23,6 +23,12 @@ void my_handler(int s){
 
 }
 
+#define BUFFER_MAX 1024 * 1024
+#define NSAMPLES2NBYTES(X) (((uint32_t)(X)) * sizeof(cf_t))
+#define NBYTES2NSAMPLES(X) ((X) / sizeof(cf_t))
+#define ZMQ_MAX_BUFFER_SIZE (NSAMPLES2NBYTES(3072000)) // 10 subframes at 20 MHz
+#define NBYTES_PER_ONE_SAMPLE (NSAMPLES2NBYTES(1)) // 1 sample
+
 int main(int argc, char *argv[]){
 
     struct sigaction sigIntHandler;
@@ -113,6 +119,9 @@ int main(int argc, char *argv[]){
     bool ue_tx_samples_redy = false;
     int size_rep_gnb_rx = 0;
     int size_rep_ue_rx = 0;
+    int counter = 0;
+    double ue_ms_elapsed = 0;
+    double gnb_ms_elapsed = 0;
     while (1)
     {        
         printf("-->> Получаем запрос от RX gNb\n");
@@ -150,7 +159,9 @@ int main(int argc, char *argv[]){
         if (size_recv_req_tx_gnb != -1)
         {
             gnb_tx_samples_redy = true;
-            printf("broker received from gNb  bytes =  %d\n", size_recv_req_tx_gnb);
+            gnb_ms_elapsed +=  1000 * NBYTES2NSAMPLES(size_recv_req_tx_gnb) / 11520000;
+            printf("[TIME - %d] samples elapsed in gNb = %d elapsed %lf [ms]", counter, NBYTES2NSAMPLES(size_recv_req_tx_gnb), gnb_ms_elapsed);
+            //printf("broker received from gNb  bytes =  %d\n", size_recv_req_tx_gnb);
         } else {
             gnb_tx_samples_redy = false;
             printf("gnb_tx_samples_redy = false;\n");
@@ -158,14 +169,17 @@ int main(int argc, char *argv[]){
 
         printf("\n-->> Отправляем запрос и получаем СЭМПЛЫ от UE\n");
         send = zmq_send(req_socket_from_ue_1_tx, &dummy_gnb, size_rep_gnb_rx, 0);
+        
         printf("req_socket_from_ue_1_tx [send] = %d\n", send);
 
         std::fill(buffer_recv_from_ue.begin(), buffer_recv_from_ue.end(), 0);
         int size_recv_req_tx_ue = zmq_recv(req_socket_from_ue_1_tx, (void*)buffer_recv_from_ue.data(), nbytes, ZMQ_DONTWAIT);
-        if (size_recv_req_tx_ue != -1)
+        if (size_recv_req_tx_ue  != -1)
         {
             ue_tx_samples_redy = true;
-            printf("broker [received data] from UE[1] %d size packet\n", size_recv_req_tx_ue);
+            ue_ms_elapsed +=  1000 * NBYTES2NSAMPLES(size_recv_req_tx_ue) / 11520000;
+            printf("[TIME - %d] samples elapsed in UE = %d elapsed %lf [ms]", counter, NBYTES2NSAMPLES(size_recv_req_tx_ue),gnb_ms_elapsed);
+            //printf("broker [received data] from UE[1] %d size packet\n", size_recv_req_tx_ue);
         } else {
             ue_tx_samples_redy = false;
             printf("ue_tx_samples_redy = false\n");
@@ -185,7 +199,9 @@ int main(int argc, char *argv[]){
             printf("rep_socket_for_gnb_rx [send data] = %d\n", send);
             gnb_rx_redy = false;
         }
-        tx_data_count++;
+        counter++;
+        printf("gNB [TIME - %lf] elapsed [ms]\n", gnb_ms_elapsed);
+        printf("UE [TIME - %lf] elapsed [ms]\n", ue_ms_elapsed);
         // summ = 0;
         printf("-------ЗАКОНЧИЛИ ИТЕРАЦИЮ -----------\n");
     }

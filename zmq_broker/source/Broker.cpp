@@ -345,7 +345,7 @@ void Broker::async_send_concatenated_sampled_from_ues_to_gnb()
             //}
         }
         gnbs[0].send_samples_to_req_rx(concatenate_to_gnb_samples, max_size);
-        // std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
+        std::fill(concatenate_to_gnb_samples.begin(), concatenate_to_gnb_samples.end(), 0);
         // gnbs[0].send_samples_to_req_rx(ues[0].get_samples_tx(), ues[0].get_ready_to_tx_bytes());
         this->all_ues_samples_ready = 0;
     }
@@ -362,7 +362,7 @@ bool Broker::async_check_ues_samples_ready()
         summ += ues[i].is_tx_samples_ready();
     }
     //std::cout <<"ues.size() = " << ues.size() <<"all_ues_samples_ready = " << summ<< std::endl;
-    if(summ >= 2){
+    if(summ >= 1){
         return true;
     } else {
         return false;
