@@ -57,35 +57,27 @@
         "typeinfo": "cpp",
         "map": "cpp",
         "variant": "cpp",
+<<<<<<< HEAD
         "csignal": "cpp",
-        "any": "cpp",
         "strstream": "cpp",
         "bitset": "cpp",
-        "cfenv": "cpp",
         "charconv": "cpp",
-        "codecvt": "cpp",
         "forward_list": "cpp",
-        "list": "cpp",
         "set": "cpp",
         "unordered_set": "cpp",
-        "expected": "cpp",
         "optional": "cpp",
         "regex": "cpp",
         "source_location": "cpp",
         "format": "cpp",
         "fstream": "cpp",
-        "future": "cpp",
         "iomanip": "cpp",
-        "ranges": "cpp",
-        "shared_mutex": "cpp",
         "span": "cpp",
-        "stdfloat": "cpp",
-        "typeindex": "cpp",
-        "valarray": "cpp"
-    },
-    
-    "workbench.editorAssociations": {
-        "*.md": "default",
-        "*.markdown": "default"
+        "typeindex": "cpp"
+=======
+        "forward_list": "cpp",
+        "list": "cpp",
+        "unordered_set": "cpp",
+        "regex": "cpp"
+>>>>>>> f33d6f3 (try matlab zmq lib)
     }
 }

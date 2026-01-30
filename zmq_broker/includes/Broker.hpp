@@ -6,6 +6,7 @@
 #include <complex>
 #include <vector>
 #include <zmq.h>
+#include <chrono>
 
 #include "Equipment.hpp"
 
