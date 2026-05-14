@@ -8,6 +8,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <random>
 #include <zmq.h>
 #include <volk/volk.h>
 
@@ -41,14 +42,16 @@ struct Rep {
 };
 
 struct UePath {
-  float pl = 1.0f;
+  double d; 
+  double pl = 1.0f;
   Req ul_req;
   Rep dl_rep;
   std::deque<cf_t> ul_ring;
   std::deque<cf_t> dl_ring;
+  std::vector<cf_t> slot_buf;
 };
 
-float db_to_pl(float db) { 
+double db_to_pl(double db) { 
   return std::pow(10.0f, -db / 20.0f); 
 }
 
@@ -161,6 +164,102 @@ bool set_sockopts(void* sock){
 }
 
 
+std::vector<cf_t> WGN(int num_samples, int N_0){
+    double noise_power = pow(10.0, N_0 / 10.0);
+    double std_dev_iq = std::sqrt(noise_power / 2.0); 
+
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+    std::normal_distribution<double> dist(0.0, std_dev_iq);
+
+    std::vector<cf_t> noise_vec(num_samples);
+
+    for (int i = 0; i < num_samples; ++i){
+        noise_vec[i] = cf_t(dist(gen), dist(gen));
+    }
+
+    return noise_vec;
+}
+
+
+double PL_coeff(double d){
+    double A = 69.55;
+    double B = 26.16;
+
+    double f = 900;
+
+    double hBs = 45;
+    double hMs = 1.5;
+
+    // double d = 0.01;
+
+    double a = 1.1 * log10(f) * hMs - (1.56 * log10(f) - 0.8);
+    double Lclutter = -(pow(4.78 * log10(11.75 * hMs), 2) - 18.33 * log10(f) + 40.94);
+    double s = 44.9 - 6.55 * log10(hBs);
+
+    double pl = A + B * log10(f) - 13.82 * log10(hBs) - a + s * log10(d) + Lclutter;
+
+    return pl;
+}
+
+void parallel_pull(std::vector<UePath>& ues, size_t req_ns, std::vector<cf_t> noise){
+
+  size_t num_threads = std::thread::hardware_concurrency();
+  num_threads = std::min(num_threads, ues.size());
+
+  std::vector<std::thread> threads;
+  size_t chunk_size = (ues.size() + num_threads - 1) / num_threads;
+
+  for(size_t t = 0; t < num_threads; t++){
+    size_t start = t * chunk_size;
+    size_t end = std::min(start + chunk_size, ues.size());
+
+    threads.emplace_back([&](size_t s, size_t e) {
+      for(size_t i = s; i < e; i++){
+        auto& ue = ues[i];
+        ue.slot_buf.resize(req_ns);
+        ring_pop_exact(ue.ul_ring, ue.slot_buf, req_ns);
+        multiply_by_const(ue.slot_buf, ue.pl);
+        // add_vectors_volk(ue.slot_buf, noise);
+      }
+    }, start, end);
+  }
+
+  for (auto& th : threads) th.join();
+}
+
+void parallel_push(std::vector<UePath>& ues, std::vector<cf_t>* ptr_rx, 
+                  std::vector<cf_t> noise, int gnb_ns){
+
+  size_t num_threads = std::thread::hardware_concurrency();
+  num_threads = std::min(num_threads, ues.size());
+
+  std::vector<std::thread> threads;
+  size_t chunk_size = (ues.size() + num_threads - 1) / num_threads;
+
+  std::vector<cf_t> source = std::vector<cf_t>(ptr_rx->begin(), ptr_rx->begin() + gnb_ns);
+  
+  for(size_t t = 0; t < num_threads; t++){
+    size_t start = t * chunk_size;
+    size_t end = std::min(start + chunk_size, ues.size());
+
+    threads.emplace_back([&](size_t s, size_t e) {
+      std::vector<cf_t> scaled(gnb_ns);
+      for(size_t i = s; i < e; i++){
+        auto& ue = ues[i];
+        std::copy(source.begin(), source.end(), scaled.begin());
+        multiply_by_const(scaled, ue.pl);
+        // add_vectors_volk(scaled, noise);
+        ring_push(ue.dl_ring, scaled.data(), gnb_ns);
+        
+      }
+    }, start, end);
+  }
+
+  for (auto& th : threads) th.join();
+}
+
+
 int main(int argc, char* argv[]){
     struct sigaction sigIntHandler;
 
@@ -170,7 +269,8 @@ int main(int argc, char* argv[]){
  
     sigaction(SIGINT, &sigIntHandler, NULL);
 
-    size_t ue_num = 5;
+    // size_t ue_num = 4;
+    size_t ue_num = atoi(argv[1]);
 
     //initialize ports
 
@@ -207,12 +307,21 @@ int main(int argc, char* argv[]){
   }
 
     // UL socket work
-    std::vector<float> pathloss = {0.0f, 10.0f, 20.0f, 20.0f, 20.0f, 20.0f};
+
+    // CHANNEL MODER
+    // std::vector<float> pathloss = {0.0f, 10.0f, 20.0f, 20.0f, 20.0f, 20.0f};
+    std::vector<double> distance = {0.05f, 0.1f, 0.15f, 0.2f, 0.25f, 0.35f};
+    
+    int N_0 = -100;
+    std::vector<cf_t> noise = WGN(SAMPLES_PER_SLOT, N_0);
+
 
     std::vector<UePath> ues;
     for(size_t i = 0; i < ue_num; i++){
       UePath ue;
-      ue.pl = db_to_pl(pathloss[i]);
+
+      double pl = PL_coeff(distance[i]);
+      ue.pl = db_to_pl(pl);
 
       ue.ul_req.sock = zmq_socket(context, ZMQ_REQ);
       ue.dl_rep.sock = zmq_socket(context, ZMQ_REP);
@@ -248,12 +357,7 @@ int main(int argc, char* argv[]){
       break;
     }
     if (gnb_ns > 0) {
-      std::vector<cf_t> scaled = std::vector<cf_t>(rx_tmp.begin(), rx_tmp.begin() + gnb_ns);
-      for (auto& ue : ues) {
-        scaled.assign(rx_tmp.begin(), rx_tmp.begin() + gnb_ns);
-        multiply_by_const(scaled, ue.pl);
-        ring_push(ue.dl_ring, scaled.data(), gnb_ns);
-      }
+      parallel_push(ues, &rx_tmp, noise, gnb_ns);
     }
 
     // ask data from UE and if got smth -> push to ue ring buffer (ul)
@@ -310,13 +414,15 @@ int main(int argc, char* argv[]){
       }
       if (all_ready) {
         ul_slot.assign(req_ns, cf_t(0.0f, 0.0f));
+        parallel_pull(ues, req_ns, noise);
         for (auto& ue : ues) {
-          slot_buf.resize(req_ns);
-          ring_pop_exact(ue.ul_ring, slot_buf, req_ns);
-          multiply_by_const(slot_buf, ue.pl);
-          add_vectors_volk(ul_slot, slot_buf);
+          // slot_buf.resize(req_ns);
+          // ring_pop_exact(ue.ul_ring, slot_buf, req_ns);
+          // multiply_by_const(slot_buf, ue.pl);
+          // add_vectors_volk(slot_buf, noise);
+          add_vectors_volk(ul_slot, ue.slot_buf);
         }
-
+        // add_vectors_volk(ul_slot, noise);
         if (rep_send_response(gnb_ul, ul_slot.data(), ul_slot.size()) < 0) {
           printf("gNB UL rep send error\n");
           break;
