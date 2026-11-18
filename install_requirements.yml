@@ -34,6 +34,7 @@
           - libtool
           - maven
           - iperf3
+          - libvolk2-dev
           # - nlohmann-json3-dev
         state: present
 

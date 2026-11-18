@@ -1,39 +1,36 @@
-# Порядок запуска компонентов системы
+# ZeroMQ Multi-UE Radio Broker
 
-### Запуск коры
-В директории /docker проекта srsRAN_5G:
+Модульный C++ брокер радиоканала для system-level симуляций (srsRAN 4G / 5G Project) с поддержкой выноса расчета моделей канала в MATLAB через ZeroMQ Multipart сообщения.
 
-```sudo docker  compose  up  --build  5gc```
+## Структура проекта
 
-### Запуск базы
-В директории /build/apps/gnb проекта srsRAN_5G:
+- `CMakeLists.txt` — конфигурация сборки C++17 (ZeroMQ, VOLK, yaml-cpp).
+- `config.yaml` — параметры радиоканала, топологии абонентов (порты, расстояния) и адрес MATLAB.
+- `Config.hpp` — парсер конфигурации на базе `yaml-cpp`.
+- `ChannelProtocol.hpp` — бинарный заголовок метаданных (16 байт) для обмена с MATLAB.
+- `RadioEndpoint.hpp` / `.cpp` — класс радиоинтерфейса узла сети (gNB или UE) с кольцевыми буферами и управлением ZMQ-сокетами (RAII).
+- `ZmqRadioBroker.hpp` / `.cpp` — класс брокера: раздача Downlink, суммирование Uplink с SIMD VOLK и перенаправление сэмплов в MATLAB.
+- `main.cpp` — точка входа и цикл тактования брокера.
+- `matlab/channel_server.m` — сервер расчета моделей 3GPP (nrTDLChannel, AWGN, Path Loss) на MATLAB.
 
-```sudo  ./gnb  -c  gnb_zmq.yaml```
+## Сборка и запуск
 
-### Запуск пользователей
-В директории /build/srsue/src проекта srsRAN_4G:
+1. Установка зависимостей в Ubuntu / WSL2:
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y build-essential cmake libzmq3-dev libvolk2-dev libyaml-cpp-dev
+   ```
 
-```sudo  ./srsue  ./ue1_zmq.conf```
-```sudo  ./srsue  ./ue2_zmq.conf```
+2. Сборка:
+   ```bash
+   mkdir -p build && cd build
+   cmake ..
+   cmake --build . -j$(nproc)
+   ```
 
-### Cборка и запуск брокера
-
-В директории /zmq_broker проекта system_level_simulation:
-
-```
-mkdir build
-cd build
-cmake ..
-make
-./main
-```
-
-### Матлаб сервер
-
-Файл с матлаб сервером в директории /matlab
-
-
-### Примечание
-
-Предполагается запуск с 1 базой и 2 пользователями. Для изменения кол-ва пользователей необходимо внести изменения в матлаб файл и конфиг брокера, который находится в
-директории /configs
+3. Запуск:
+   - Если используется MATLAB: запустите `matlab/channel_server.m` в MATLAB.
+   - Запуск брокера:
+     ```bash
+     ./zmq_broker ../config.yaml
+     ```

@@ -1,54 +1,55 @@
+#include "ZmqRadioBroker.hpp"
+#include "Config.hpp"
 #include <iostream>
-#include <mutex>
-#include <zmq.h>
+#include <chrono>
 #include <thread>
-#include <cstring>
-#include <cmath>
-#include <unistd.h>
+#include <csignal>
 
-#include <vector>
-#include <random>
-#include <complex>
-#include <algorithm>
-#include <time.h>
+static volatile sig_atomic_t g_running = 1;
+void sig_handler(int) { g_running = 0; }
 
-#include "includes/Broker.hpp"
-#include "includes/subfunc.hpp"
+int main(int argc, char* argv[]) {
+    signal(SIGINT, sig_handler);
 
-
-void my_handler(int s){
-    printf("Caught signal %d\n",s);
+    std::string config_path = (argc > 1) ? argv : "config.yaml";
     
-    exit(1); 
+    BrokerConfig config;
+    try {
+        config = BrokerConfig::load(config_path);
+        std::cout << "[Config] Loaded: " << config_path << "\n";
+    } catch (const std::exception& e) {
+        std::cerr << "[Config Error] " << e.what() << "\n";
+        return 1;
+    }
 
-}
+    void* zmq_ctx = zmq_ctx_new();
 
-int main(){
+    std::string gnb_tx = "tcp://127.0.0.1:" + std::to_string(config.gnb_tx_port);
+    std::string gnb_rx = "tcp://*:" + std::to_string(config.gnb_rx_port);
 
-    struct sigaction sigIntHandler;
+    ZmqRadioBroker broker(zmq_ctx, gnb_tx, gnb_rx);
 
-    sigIntHandler.sa_handler = my_handler;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
- 
-    sigaction(SIGINT, &sigIntHandler, NULL);
+    if (config.matlab_enabled) {
+        broker.enable_matlab_channel(zmq_ctx, config.matlab_endpoint);
+    }
 
-    std::string config_file_path = "../configs/broker.json";
+    for (const auto& ue : config.ues) {
+        std::string tx_addr = "tcp://127.0.0.1:" + std::to_string(ue.tx_port);
+        std::string rx_addr = "tcp://*:" + std::to_string(ue.rx_port);
 
-    std::vector<Equipment> ues;
-    std::vector<Equipment> gnbs;
+        broker.add_ue(zmq_ctx, ue.id, tx_addr, rx_addr, static_cast<float>(ue.distance_km), ue.path_loss_lin);
+        std::cout << "[Broker] Registered UE[" << ue.id << "] (d=" << ue.distance_km 
+                  << " km, linear PL=" << ue.path_loss_lin << ")\n";
+    }
 
-    ues.push_back(Equipment(2100, 2101, 1, 1));
-    ues.push_back(Equipment(2200, 2201, 2, 1));
-    // ues.push_back(Equipment(2110, 2111, 1, 1));
-    // ues.push_back(Equipment(2120, 2121, 2, 1));
-    // ues.push_back(Equipment(2130, 2131, 3, 1));
+    std::cout << "[Broker] Running. Press Ctrl+C to stop.\n";
 
-    gnbs.push_back(Equipment(2001, 2000, 255, 0));
-    Broker broker = Broker(config_file_path, ues, gnbs);
-    broker.enable_matlab = false;
+    while (g_running) {
+        broker.process_cycle();
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
+    }
 
-    broker.start_the_proxy();
-
+    zmq_ctx_destroy(zmq_ctx);
+    std::cout << "\n[Broker] Terminated cleanly.\n";
     return 0;
 }

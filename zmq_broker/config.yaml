@@ -1,0 +1,32 @@
+# Settings for external MATLAB Channel Engine
+matlab_engine:
+  enabled: true
+  endpoint: "tcp://127.0.0.1:5555"
+
+# Local channel parameters (used if MATLAB is disabled)
+channel:
+  carrier_freq_mhz: 900.0
+  bs_height_m: 45.0
+  ue_height_m: 1.5
+
+# Base station (gNodeB) ports
+gnb:
+  tx_port: 2000    # Broker REQ connects to gNB DL output
+  rx_port: 2001    # Broker REP delivers combined UL to gNB input
+
+# User equipments (UE) list
+ues:
+  - id: 0
+    tx_port: 2111
+    rx_port: 2110
+    distance_km: 0.05
+
+  - id: 1
+    tx_port: 2121
+    rx_port: 2120
+    distance_km: 0.15
+
+  - id: 2
+    tx_port: 2131
+    rx_port: 2130
+    distance_km: 0.25
