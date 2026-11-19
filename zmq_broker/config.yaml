@@ -1,6 +1,6 @@
 # Settings for external MATLAB Channel Engine
 matlab_engine:
-  enabled: true
+  enabled: false
   endpoint: "tcp://127.0.0.1:5555"
 
 # Local channel parameters (used if MATLAB is disabled)
@@ -29,4 +29,14 @@ ues:
   - id: 2
     tx_port: 2131
     rx_port: 2130
+    distance_km: 0.25
+
+  - id: 3 
+    tx_port: 2141 
+    rx_port: 2140 
+    distance_km: 0.20 
+
+  - id: 4 
+    tx_port: 2151 
+    rx_port: 2150 
     distance_km: 0.25

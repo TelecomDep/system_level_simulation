@@ -13,32 +13,31 @@ NUM_UES=1
 echo $CFG_PATH
 echo $CURRENT_DIR
 start_program() {
-    sudo xterm  -e "$1" -c "$2" &
+    sudo -E xterm -e "$1" "$2" &
     pids+=($!)
     sleep 0.2
 }
 
 
 # Start gNb
-start_program "$CURRENT_DIR/srsRAN_Project/build/apps/gnb/gnb" "$CFG_PATH/gnb_zmq.yaml"
-sleep 0.2
+sudo -E xterm -e "$CURRENT_DIR/srsRAN_Project/build/apps/gnb/gnb" -c "$CFG_PATH/gnb_zmq.yaml" &
+# Создаем новую сессию tmux и запускаем gNB в первом окне 
+# tmux new-session -d -s $SESSION -n "gnb" "sudo $CURRENT_DIR/srsRAN_Project/build/apps/gnb/gnb $CFG_PATH/gnb_zmq.yaml"
+pids+=($!)
+sleep 1
 
-# sudo xterm -hold -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue11_zmq.conf"
-# sleep 0.2
-# sudo ip netns add "ue11"
+# 2. Запуск ZMQ Брокера 
+echo "Starting Broker..." 
+sudo -E xterm -e "$CURRENT_DIR/zmq_broker/build/zmq_broker" "$CURRENT_DIR/zmq_broker/config.yaml" &
+pids+=($!)
+sleep 1
 
-# sudo xterm -hold -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue12_zmq.conf"
-# sleep 0.2
-# sudo ip netns add "ue12"
-
-# sudo xterm -hold -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue13_zmq.conf"
-# sleep 0.2
-# sudo ip netns add "ue13"
 # Start UEs
 for ue_id in $(seq 11 15); do
-    sudo xterm -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue${ue_id}_zmq.conf" &
+    sudo -E xterm -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue${ue_id}_zmq.conf" &
+    # tmux new-window -t $SESSION -n "ue${ue_id}" "sudo $CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue $CFG_PATH/ue${ue_id}_zmq.conf" &
     pids+=($!)
-    sleep 0.5
+    sleep 3
     sudo ip netns add "ue${ue_id}"
 done
 
@@ -56,4 +55,3 @@ done
 
 # echo "Press Enter to close all programs..."
 # read enter_to_close
-

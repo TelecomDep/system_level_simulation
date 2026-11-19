@@ -20,13 +20,13 @@ done
 
 
 for ue_id in $(seq 11 15); do
-    xterm -hold -e "iperf3 -s -i 1 -p 520${ue_id}" &
+    sudo -E xterm -e "iperf3 -s -i 1 -p 520${ue_id}" &
     # pids+=($!)
     sleep 0.2
 done
 
 for ue_id in $(seq 11 15); do
-    sudo xterm -e "sudo ip netns exec ue${ue_id} iperf3 -c 10.53.1.1 -R -i 1 -t 60 -b 30M -p 520${ue_id}" &
+    sudo -E xterm -e "sudo ip netns exec ue${ue_id} iperf3 -c 10.53.1.1 -R -i 1 -t 60 -b 30M -p 520${ue_id}" &
     # pids+=($!)
     sleep 0.2
 done

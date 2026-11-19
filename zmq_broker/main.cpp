@@ -11,7 +11,7 @@ void sig_handler(int) { g_running = 0; }
 int main(int argc, char* argv[]) {
     signal(SIGINT, sig_handler);
 
-    std::string config_path = (argc > 1) ? argv : "config.yaml";
+    std::string config_path = (argc > 1) ? argv[1] : "../config.yaml";
     
     BrokerConfig config;
     try {
