@@ -114,15 +114,41 @@ sudo ./install
 # Запуск системы имитационного моделирования
 
 1. Запускаем Open5GS и Grafana (если необходимо):
+
 ```bash
+cd srsRAN_Project/docker
+sudo docker compose up
 ```
 2. Запускаем `Matlab`-скрипт. 
-На стороне `Matlab` запускается серверная часть (`socket.bind()`).
 
-3. Далее, запускаем 
 ```
+// TODO
 ```
 
+3. Далее, запускаем `broker`-сообщений:
+
+```
+cd zmq_broker
+./zmq_broker ../config.yaml
+```
+
+4. Запускаем `gNb` и `UEs`:
+
+```
+ sudo -E ./run.sh 
+```
+
+5. Нагружаем тарфиком из `iperf3`:
+
+```
+sudo -E ./iperf_run.sh
+```
+
+6. Смотрим на метрики в графане:
+
+```
+http://localhost:3300/
+```
 
 
 
