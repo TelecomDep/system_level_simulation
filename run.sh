@@ -27,17 +27,17 @@ pids+=($!)
 sleep 1
 
 # 2. Запуск ZMQ Брокера 
-echo "Starting Broker..." 
-sudo -E xterm -e "$CURRENT_DIR/zmq_broker/build/zmq_broker" "$CURRENT_DIR/zmq_broker/config.yaml" &
-pids+=($!)
-sleep 1
+# echo "Starting Broker..." 
+# sudo -E xterm -e "$CURRENT_DIR/zmq_broker/build/zmq_broker" "$CURRENT_DIR/zmq_broker/config.yaml" &
+# pids+=($!)
+# sleep 1
 
 # Start UEs
 for ue_id in $(seq 11 15); do
     sudo -E xterm -e "$CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue" "$CFG_PATH/ue${ue_id}_zmq.conf" &
     # tmux new-window -t $SESSION -n "ue${ue_id}" "sudo $CURRENT_DIR/srsRAN_4G/build/srsue/src/srsue $CFG_PATH/ue${ue_id}_zmq.conf" &
     pids+=($!)
-    sleep 3
+    sleep 1
     sudo ip netns add "ue${ue_id}"
 done
 

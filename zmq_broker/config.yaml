@@ -34,9 +34,9 @@ ues:
   - id: 3 
     tx_port: 2141 
     rx_port: 2140 
-    distance_km: 0.20 
+    distance_km: 0.45 
 
   - id: 4 
     tx_port: 2151 
     rx_port: 2150 
-    distance_km: 0.25
+    distance_km: 0.4
